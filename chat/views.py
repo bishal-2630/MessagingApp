@@ -1,9 +1,13 @@
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import permission_classes
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
 from .models import Messages
 from .serializers import MessageSerializer
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def message_list(request):
     if request.method == 'GET':
         sender_name = request.query_params.get('sender')
