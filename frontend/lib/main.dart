@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'login_screen.dart';
 import 'dart:convert';
 
 void main() {
@@ -12,21 +13,19 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Chat',
       theme: ThemeData(
         
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const LoginScreen(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
-  
-
   final String title;
 
   @override
@@ -34,8 +33,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+ final TextEditingController _senderController = TextEditingController(text:'Bishal');
+ final TextEditingController _contentController = TextEditingController();
+
  Future<List<Message>> fetchMessages() async {
-  final response = await http.get(Url.parse('http://10.0.2.2:8000/api/messages/'));
+  final response = await http.get(Uri.parse('http://10.0.2.2:8000/api/messages/'));
 
   if (response.statusCode == 200) {
     Map<String, dynamic> data = jsonDecode(response.body);
@@ -49,18 +51,32 @@ class _MyHomePageState extends State<MyHomePage> {
   }
  }
 
- int  _counter = 0;
+Future<void> sendMessage() async {
+    if (_contentController.text.isEmpty) return;
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:8000/api/messages/'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'sender': _senderController.text,
+        'content': _contentController.text,
+      }),
+    );
 
-  void _incrementCounter() {
-    setState(() {
-      
-    });
+    if (response.statusCode == 201) {
+      // Clear the text box after sending
+      _contentController.clear();
+      // Refresh the list to show the new message
+      setState(() {}); 
+    } else {
+      print('Error sending message: ${response.body}');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.title),
+      ),
       body: FutureBuilder<List<Message>>(
         future: fetchMessages(),
         builder: (context, snapshot) {
@@ -86,10 +102,28 @@ class _MyHomePageState extends State<MyHomePage> {
           else{
             return const Center(child: Text('No messages'));
           }
-        }
+        },
       ),
-      );
-    }
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _contentController,
+                decoration: const InputDecoration(hintText: 'Type a message...'),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.send),
+              onPressed: sendMessage,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class Message {
   final int id;
