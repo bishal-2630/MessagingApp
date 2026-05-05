@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'login_screen.dart';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -37,25 +38,36 @@ class _MyHomePageState extends State<MyHomePage> {
  final TextEditingController _contentController = TextEditingController();
 
  Future<List<Message>> fetchMessages() async {
-  final response = await http.get(Uri.parse('http://10.0.2.2:8000/api/messages/'));
-
+  final prefs = await SharedPreferences.getInstance(); // <--- Corrected S and P
+  final token = prefs.getString('token');
+  final response = await http.get(
+    Uri.parse('http://10.0.2.2:8000/api/messages/'),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Token $token',
+    },
+  );
+  
   if (response.statusCode == 200) {
-    Map<String, dynamic> data = jsonDecode(response.body);
-
-    List<dynamic> results = data['results'];
-
-    return results.map((item) => Message.fromJson(item)).toList();
-
+    List jsonResponse = json.decode(response.body);
+    return jsonResponse.map((data) => Message.fromJson(data)).toList();
   } else {
-    throw Exception('Failed to load messages');
+    throw Exception('Failed to load messages: ${response.statusCode}');
   }
- }
+}
 
 Future<void> sendMessage() async {
     if (_contentController.text.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
     final response = await http.post(
       Uri.parse('http://10.0.2.2:8000/api/messages/'),
-      headers: {'Content-Type': 'application/json'},
+       headers: {
+        'Content-Type':'application/json',
+        'Authorization': 'Token $token',
+       },
+  
       body: jsonEncode({
         'sender': _senderController.text,
         'content': _contentController.text,

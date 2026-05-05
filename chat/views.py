@@ -4,6 +4,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
+from django.core.mail import send_mail
+from django.conf import settings
 from .models import Messages
 from .serializers import MessageSerializer
 
@@ -65,3 +67,22 @@ def register_user(request):
 
     return Response({'token': token.key})
     
+    verification_link = f"http://10.0.2.2:8000/api/verify/?username={username}"
+
+    send_mail(
+        'Verify your Chat Me Account',
+        f'Hi {username}, click here to verify: {verification_link}',
+        settings.EMAIL_HOST_USER,
+        [email], # <--- This is the user's real email!
+        fail_silently=False,
+    )
+    return Response({'message': 'Check your email to verify your account!'})
+
+
+@api_view(['GET'])
+def verify_email(request):
+    username = request.query_params.get('username')
+    user = User.objects.get(username=username)
+    user.is_active = True # <--- Unlock the account!
+    user.save()
+    return Response({"message": "Account verified! You can now login."})
