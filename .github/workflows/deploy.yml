@@ -27,8 +27,8 @@ jobs:
           git config --global user.name "github-actions[bot]"
 
           # Add the Hugging Face Space as a remote using the HF Write token
-          # Target Space: bishal-2630/MessagingApp
-          git remote add hf "https://bishal-2630:$HF_TOKEN@huggingface.co/spaces/bishal-2630/MessagingApp"
+          # Target Space: Bishall10/Chatme
+          git remote add hf "https://Bishall10:$HF_TOKEN@huggingface.co/spaces/Bishall10/Chatme"
 
           # Push the current commit (HEAD) to the matching branch name on Hugging Face
           git push -f hf HEAD:"refs/heads/$BRANCH_NAME"
