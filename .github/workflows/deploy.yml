@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags
 
-      - name: Push to Hugging Face
+      - name: Push to Hugging Face (history-free)
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
@@ -22,13 +22,18 @@ jobs:
           BRANCH_NAME="${GITHUB_REF##*/}"
           echo "Deploying branch $BRANCH_NAME to Hugging Face Spaces..."
 
-          # Configure git
+          # Configure git identity
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-          # Add the Hugging Face Space as a remote using the HF Write token
-          # Target Space: Bishall10/Chatme
+          # Create a clean orphan branch with only the current files (no history)
+          # This ensures no old binary files from previous commits reach HF
+          git checkout --orphan hf-deploy-temp
+          git add -A
+          git commit -m "Deploy: $BRANCH_NAME @ $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+          # Add the Hugging Face Space as a remote
           git remote add hf "https://Bishall10:$HF_TOKEN@huggingface.co/spaces/Bishall10/Chatme"
 
-          # Push the current commit (HEAD) to the matching branch name on Hugging Face
-          git push -f hf HEAD:"refs/heads/$BRANCH_NAME"
+          # Force push the clean orphan commit to the matching branch name on HF
+          git push -f hf "hf-deploy-temp:refs/heads/$BRANCH_NAME"
