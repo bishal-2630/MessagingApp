@@ -11,7 +11,7 @@ SECRET_KEY = 'django-insecure-q4+g&%9#hth-3#9x_^-exe=&6-02v$&re6v-6r+h21_sm7-&v+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -106,6 +106,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 REST_FRAMEWORK = {
@@ -125,5 +126,5 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'chatwithme2630@gmail.com' # <--- Your real Gmail
-EMAIL_HOST_PASSWORD = 'your-app-password'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'chatwithme2630@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'your-app-password')

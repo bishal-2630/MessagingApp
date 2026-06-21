@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'login_screen.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'api_config.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
       title: 'Chat',
       theme: ThemeData(
         
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
       home: const LoginScreen(),
@@ -41,7 +42,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final prefs = await SharedPreferences.getInstance(); // <--- Corrected S and P
   final token = prefs.getString('token');
   final response = await http.get(
-    Uri.parse('http://10.0.2.2:8000/api/messages/'),
+    Uri.parse('${getBaseUrl()}/api/messages/'),
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Token $token',
@@ -62,7 +63,7 @@ Future<void> sendMessage() async {
     final token = prefs.getString('token');
 
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:8000/api/messages/'),
+      Uri.parse('${getBaseUrl()}/api/messages/'),
        headers: {
         'Content-Type':'application/json',
         'Authorization': 'Token $token',

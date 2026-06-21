@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'signup_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'api_config.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // 2. The Login Function MUST be inside the class
   Future<void> loginUser() async {
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:8000/api/login/'),
+      Uri.parse('${getBaseUrl()}/api/login/'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'username': _usernameController.text,
