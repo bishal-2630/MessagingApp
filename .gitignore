@@ -33,11 +33,7 @@ frontend/.pub/
 frontend/doc/api/
 
 # iOS
-frontend/ios/Pods/
-frontend/ios/.symlinks/
-frontend/ios/Flutter/Flutter.framework
-frontend/ios/Flutter/Flutter.podspec
-frontend/ios/Runner/GeneratedPluginRegistrant.*
+frontend/ios/
 
 # Android
 frontend/android/.gradle/
@@ -47,14 +43,13 @@ frontend/android/app/google-services.json
 frontend/android/gradle/
 
 # macOS
-frontend/macos/Pods/
-frontend/macos/.symlinks/
+frontend/macos/
 
 # Linux
-frontend/linux/flutter/ephemeral/
+frontend/linux/
 
 # Windows
-frontend/windows/flutter/ephemeral/
+frontend/windows/
 
 # Assets
 *.xcassets
