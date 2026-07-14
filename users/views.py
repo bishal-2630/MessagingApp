@@ -1,4 +1,7 @@
-from rest_framework import status
+from .models import User
+from functools import partial
+from users.serializers import ProfileSerializer
+from rest_framework import status, viewsets
 from django.shortcuts import render
 from django.http import JsonResponse
 from rest_framework.views import APIView
@@ -6,6 +9,7 @@ from .serializers import UserSerializer
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
+
 
 class RegisterView(APIView):
     permission_classes = []
@@ -26,3 +30,21 @@ class LoginView(APIView):
             token, created = Token.objects.get_or_create(user=user)
             return Response({'token': token.key,'user_id': user.id, 'username': user.username})
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+class ProfileView(APIView):
+    def get(self, request):
+        user = request.user
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
+
+    def put(self, request):
+        profile = request.user.profile  
+        serializer = ProfileSerializer(profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
