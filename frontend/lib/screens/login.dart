@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-
+import '../services/api_service.dart';
+import '../services/auth_service.dart';
+import 'package:dio/dio.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +15,15 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>{
     final _formKey = GlobalKey<FormState>();
     bool _isPasswordVisible =false;
+    final TextEditingController _emailController = TextEditingController();
+    final TextEditingController _passwordController = TextEditingController();
+
+    @override
+    void dispose() {
+        _emailController.dispose();
+        _passwordController.dispose();
+        super.dispose();
+    }
 
     @override
     Widget build(BuildContext context) {
@@ -42,6 +53,7 @@ class _LoginScreenState extends State<LoginScreen>{
 
                               const SizedBox(height: 32.0),
                               TextFormField(
+                                  controller: _emailController,
                                   keyboardType: TextInputType.emailAddress,
                                   decoration: const InputDecoration(
                                       labelText: 'Email',
@@ -53,6 +65,7 @@ class _LoginScreenState extends State<LoginScreen>{
                               
                               const SizedBox(height: 16.0),
                               TextFormField(
+                                  controller: _passwordController,
                                   obscureText: !_isPasswordVisible,
                                   decoration: InputDecoration(
                                       labelText: 'Password',
@@ -76,14 +89,34 @@ class _LoginScreenState extends State<LoginScreen>{
 
                               const SizedBox(height: 24.0),
                               ElevatedButton(
-                                  onPressed: () {
-                                    if (_formKey.currentState!.validate()) {
-                                      _formKey.currentState!.save();
+                                  onPressed: () async {
+                                    try {
+                                      final response = await ApiService.login(
+                                        email: _emailController.text,
+                                        password: _passwordController.text,
+                                      );
+                                      await AuthService.saveToken(response['token']);
+                                      if (!mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Login successfull!')),
+                                      );
+
+                                      Navigator.pushReplacementNamed(context, '/messages');
+                                    } catch (e) {
+                                      if (!mounted) return;
+                                      String errorMessage = 'Login failed';
+                                      if (e is DioException && e.response != null) {
+                                        errorMessage = e.response!.data.toString();
+                                      } else {
+                                        errorMessage = e.toString();
+                                      }
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text(errorMessage)),
+                                      );
                                     }
                                   },
                                   child: const Text('Login'),
                               ),
-
                               const SizedBox(height: 16.0),
                               Row(
                                   mainAxisAlignment: MainAxisAlignment.center,

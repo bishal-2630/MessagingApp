@@ -1,11 +1,8 @@
-from users.views import UserListView
-from unicodedata import name
-from users.views import ProfileView
 from django.urls import path
 from . import views 
-from .views import RegisterView, LoginView
+from .views import RegisterView, LoginView, ProfileView, UserViewSet
 from rest_framework.routers import DefaultRouter
-from .views import UserViewSet
+
 
 router = DefaultRouter()
 router.register('users', views.UserViewSet, basename='user')

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+import 'package:dio/dio.dart';
 
 class RegisterScreen extends  StatefulWidget {
     const RegisterScreen({super.key});
@@ -70,8 +72,33 @@ class _RegisterScreenState extends State<RegisterScreen>{
                                     ),
                                     const SizedBox(height: 24.0),
                                     ElevatedButton(
-                                        onPressed: () {
-                                            print(_emailController.text);
+                                        onPressed: () async {
+                                            try {
+                                                await ApiService.register(
+                                                    username: _usernameController.text,
+                                                    email: _emailController.text,
+                                                    password: _passwordController.text,
+                                                );
+                                            if (!mounted) return;
+
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Registration Successful'))
+                                            );
+                                            Navigator.pop(context); 
+                                            }
+                                            catch (e)
+                                            {
+                                                if (!mounted) return;
+                                                String errorMessage = 'Registration failed';
+                                                if (e is DioException && e.response != null) {
+                                                    errorMessage = e.response!.data.toString();
+                                                } else {
+                                                    errorMessage = e.toString();
+                                                }
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(content: Text(errorMessage))
+                                                );
+                                            }
                                         },
                                         child: const Text('Register'),
                                     ),
