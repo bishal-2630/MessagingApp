@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/login.dart';
+import 'screens/register.dart';
+import 'config/theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,13 +15,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Chatme',
-      theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
+      theme: AppTheme.darkTheme,
+      
       routes: {
         '/': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/home': (context) => const HomeScreen(),
+        // '/home': (context) => const HomeScreen(),
       },
     );
   }
