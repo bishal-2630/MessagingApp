@@ -20,62 +20,71 @@ class _RegisterScreenState extends State<RegisterScreen>{
         super.dispose();
     }
 
-    @override
+        @override
     Widget build(BuildContext context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final formWidth = screenWidth > 600 ? 500.0 : double.infinity;
+
         return Scaffold(
             appBar: AppBar(
                 title: const Text('Register'),
             ),
-            body: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                        TextFormField(
-                            controller: _usernameController, 
-                            decoration: const InputDecoration(
-                                labelText: 'Username',
+            body: Center(
+                child: SizedBox(
+                    width: formWidth,
+                    child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: SingleChildScrollView( 
+                            child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                    TextFormField(
+                                        controller: _usernameController, 
+                                        decoration: const InputDecoration(
+                                            labelText: 'Username',
+                                        ),
+                                    ),
+                                    const SizedBox(height: 16.0),
+                                    TextFormField(
+                                        controller: _emailController, 
+                                        keyboardType: TextInputType.emailAddress,  
+                                        decoration: const InputDecoration(
+                                            labelText: 'Email',
+                                        ),
+                                    ),
+                                    const SizedBox(height: 16.0),
+                                    TextFormField(
+                                        controller: _passwordController, 
+                                        obscureText: true,
+                                        decoration: const InputDecoration(
+                                            labelText: 'Password',
+                                        ),
+                                    ),
+                                    const SizedBox(height: 16.0),
+                                    TextFormField(
+                                        controller: _confirmPasswordController, 
+                                        obscureText: true,
+                                        decoration: const InputDecoration(
+                                            labelText: 'Confirm Password',
+                                        ),
+                                    ),
+                                    const SizedBox(height: 24.0),
+                                    ElevatedButton(
+                                        onPressed: () {
+                                            print(_emailController.text);
+                                        },
+                                        child: const Text('Register'),
+                                    ),
+                                    TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('Already have an account? Login'),
+                                    ),
+                                ],
                             ),
                         ),
-                        const SizedBox(height: 16.0),
-                        TextFormField(
-                            controller: _emailController, 
-                            keyboardType: TextInputType.emailAddress,  
-                            decoration: const InputDecoration(
-                                labelText: 'Email',
-                            ),
-                        ),
-                        const SizedBox(height: 16.0),
-                        TextFormField(
-                            controller: _passwordController, 
-                            obscureText: true,
-
-                            decoration: const InputDecoration(
-                                labelText: 'Password',
-                            ),
-                        ),
-                        const SizedBox(height: 16.0),
-                        TextFormField(
-                            controller: _confirmPasswordController, 
-                            obscureText: true,
-                            decoration: const InputDecoration(
-                                labelText: 'Confirm Password',
-                            ),
-                        ),
-
-                        const SizedBox(height: 24.0),
-                        ElevatedButton(
-                            onPressed: () {
-                                print(_emailController.text);
-                            },
-                            child: const Text('Register'),
-                        ),
-
-                    ]
-                    
-                )
+                    ),
+                ),
             )
         );
     }
 }
-

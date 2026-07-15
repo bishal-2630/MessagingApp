@@ -24,6 +24,18 @@ static ThemeData get darkTheme => ThemeData(
         ),
     ),
 
+    elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF7C4DFF),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            minimumSize: const Size(double.infinity, 50),
+        ),
+    ),
+
 );
 
 
