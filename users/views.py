@@ -55,3 +55,19 @@ class ProfileView(APIView):
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+class UserSearchView(APIView):
+    def get(self,request):
+        username= request.query_params.get('username')
+        if not username:
+            return Response({'No Match Found '}, status= status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(username__iexact=username).exclude(id=request.user.id).first()
+
+        if not user:
+            return Response({'No User Found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+        
+        
