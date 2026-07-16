@@ -13,7 +13,7 @@ class MessageScreen extends StatelessWidget {
                     IconButton(
                         icon: const Icon(Icons.logout),
                         onPressed: () async {
-                            await AuthService.deleteToken();
+                            await AuthService.deleteTokens();
                             if (!context.mounted) return;
                             Navigator.pushReplacementNamed(context, '/');
                         },

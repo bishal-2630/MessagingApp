@@ -1,10 +1,45 @@
 import 'package:dio/dio.dart';
+import 'auth_service.dart';
 
 class ApiService {
     static final Dio _dio = Dio(
         BaseOptions(
             baseUrl: 'http://10.0.2.2:8000/api/',
             contentType: 'application/json',
+        ),
+    )..interceptors.add(
+        InterceptorsWrapper(
+            onRequest: (options, handler) async {
+                final token = await AuthService.getAccessToken();
+                if (token != null) {
+                    options.headers['Authorization'] = 'Bearer $token';
+                }
+                return handler.next(options);
+            },
+            onError: (DioException error, handler) async {
+                if(error.response?.statusCode == 401){
+                    final refreshToken = await AuthService.getRefreshToken();
+                    if(refreshToken != null){
+                        try {
+                            final response = await Dio().post('http://10.0.2.2:8000/api/token/refresh/',
+                            data: {'refresh': refreshToken},
+                            );
+                            final newAccessToken = response.data['access'];
+                            await AuthService.saveTokens(
+                                access: newAccessToken,
+                                refresh: refreshToken
+                            );
+                            error.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
+                            final retryResponse = await _dio.fetch(error.requestOptions);
+                            return handler.resolve(retryResponse);
+                        } catch (_) {
+                            await AuthService.deleteTokens();
+                        } 
+
+                        }
+                    }
+                    return handler.next(error);
+                },
         ),
     );
 

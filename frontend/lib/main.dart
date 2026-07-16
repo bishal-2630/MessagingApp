@@ -7,7 +7,7 @@ import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final token = await AuthService.getToken();
+  final token = await AuthService.getAccessToken();
   runApp( MyApp(initialRoute: token == null ? '/' : '/messages'));
 }
 

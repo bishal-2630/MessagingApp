@@ -95,7 +95,10 @@ class _LoginScreenState extends State<LoginScreen>{
                                         email: _emailController.text,
                                         password: _passwordController.text,
                                       );
-                                      await AuthService.saveToken(response['token']);
+                                      await AuthService.saveTokens(
+                                      access: response['access'],
+                                      refresh: response['refresh'],
+                                      );
                                       if (!mounted) return;
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(content: Text('Login successfull!')),
