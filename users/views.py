@@ -9,6 +9,8 @@ from .serializers import UserSerializer
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 
 class RegisterView(APIView):
@@ -27,8 +29,13 @@ class LoginView(APIView):
         password = request.data.get('password')
         user = authenticate(request, username=email, password=password)
         if user:
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key,'user_id': user.id, 'username': user.username})
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user_id': user.id,
+                'username': user.username,
+            })
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class ProfileView(APIView):

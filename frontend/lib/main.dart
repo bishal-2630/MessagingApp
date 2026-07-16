@@ -2,13 +2,18 @@ import 'package:flutter/material.dart';
 import 'screens/login.dart';
 import 'screens/register.dart';
 import 'config/theme.dart';
+import 'screens/messages.dart';
+import 'services/auth_service.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final token = await AuthService.getToken();
+  runApp( MyApp(initialRoute: token == null ? '/' : '/messages'));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String initialRoute;
+  const MyApp({super.key, required this.initialRoute});
 
   
   @override
@@ -16,11 +21,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Chatme',
       theme: AppTheme.darkTheme,
+      initialRoute: initialRoute,
       
       routes: {
         '/': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        // '/home': (context) => const HomeScreen(),
+        '/messages': (context) => const MessageScreen(),
       },
     );
   }
