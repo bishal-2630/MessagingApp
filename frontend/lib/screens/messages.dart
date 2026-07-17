@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/api_service.dart';
 
 class MessageScreen extends StatelessWidget {
     const MessageScreen({super.key});
@@ -20,8 +21,42 @@ class MessageScreen extends StatelessWidget {
                     ),
                 ],
             ),
-            body: const Center(
-                child: Text('ChatMe'),
+            body: FutureBuilder<List<dynamic>>(
+                future: ApiService.getConversations(),
+                builder: (context, snapshot){
+                    if (snapshot.connectionState ==
+                    ConnectionState.waiting){
+                        return const Center(child: CircularProgressIndicator());
+                    }
+                    if(snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    final conversations = snapshot.data ?? [];
+                    if(conversations.isEmpty) {
+                        return const Center(child: Text('No messages yet. Tap + to start a conversation.'));
+                    }
+                    return ListView.builder(
+                        itemCount: conversations.length,
+                        itemBuilder: (context, index) {
+                            final chat = conversations[index];
+                            return ListTile(
+                                title: Text('Conversation ${chat['id']}'),
+                                subtitle: Text('Tap to open'),
+                                onTap: () {
+                                    Navigator.pushNamed(context, '/chat', arguments: chat['id']);
+                                },
+                            );
+                        },
+                    );
+                },
+            ),
+
+            floatingActionButton: FloatingActionButton(
+                onPressed: () {
+                    Navigator.pushNamed(context, '/search');
+                },
+                child: const Icon(Icons.message),
             ),
             
         );

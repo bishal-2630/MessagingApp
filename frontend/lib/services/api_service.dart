@@ -70,4 +70,21 @@ class ApiService {
         );
         return response.data;
     }
+
+
+static Future<Map<String, dynamic>> searchUser(String username) async {
+    final response = await _dio.get('users/search/', queryParameters: {'username': username},
+    );
+    return response.data;
+}
+
+static Future<Map<String, dynamic>> getOrCreateConversation(int targetUserId) async {
+    final response = await _dio.post('conversations/', data: {'target_user_id': targetUserId});
+    return response.data;
+}
+
+static Future<List<dynamic>> getConversations() async {
+    final response = await _dio.get('conversations/');
+    return response.data['results'];
+}
 }
