@@ -17,6 +17,13 @@ class ApiService {
                 return handler.next(options);
             },
             onError: (DioException error, handler) async {
+                final path = error.requestOptions.path;
+                if (path.contains('login') || 
+                    path.contains('register') || 
+                    path.contains('token/refresh')) {
+                    return handler.next(error);
+                }
+
                 if(error.response?.statusCode == 401){
                     final refreshToken = await AuthService.getRefreshToken();
                     if(refreshToken != null){
@@ -83,8 +90,27 @@ static Future<Map<String, dynamic>> getOrCreateConversation(int targetUserId) as
     return response.data;
 }
 
-static Future<List<dynamic>> getConversations() async {
-    final response = await _dio.get('conversations/');
-    return response.data['results'];
-}
+    static Future<List<dynamic>> getConversations() async {
+        final response = await _dio.get('conversations/');
+        return response.data['results'];
+    }
+
+    static Future<List<dynamic>> getMessages(int conversationId) async {
+        final response = await _dio.get(
+            'messages/',
+            queryParameters: {'conversation': conversationId},
+        );
+        return response.data['results'];
+    }
+
+    static Future<Map<String, dynamic>> sendMessage(int conversationId, String content) async {
+        final response = await _dio.post(
+            'messages/',
+            data: {
+                'conversation': conversationId,
+                'content': content,
+            },
+        );
+        return response.data;
+    }
 }

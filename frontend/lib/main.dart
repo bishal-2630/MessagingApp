@@ -4,6 +4,8 @@ import 'screens/register.dart';
 import 'config/theme.dart';
 import 'screens/messages.dart';
 import 'services/auth_service.dart';
+import 'services/api_service.dart';
+import 'screens/search_user.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
