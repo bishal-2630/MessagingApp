@@ -130,6 +130,14 @@ REST_FRAMEWORK = {
     'PAGE_SIZE':5,
 }
 
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),   # ← Changed from 5 mins to 1 hour
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),   # ← Changed from 1 day to 30 days
+    'ROTATE_REFRESH_TOKENS': True,                  # Issue a new refresh token on every refresh
+    'BLACKLIST_AFTER_ROTATION': False,              # Keep it simple for now
+}
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 

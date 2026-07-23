@@ -7,6 +7,9 @@ class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ['id','conversation','sender','sender_username','content','created_at']
+        extra_kwargs = {
+            'sender' : {'read_only':True}
+        }
 
 class ConversationSerializer(serializers.ModelSerializer):
     participants = UserSerializer(many=True, read_only=True)
