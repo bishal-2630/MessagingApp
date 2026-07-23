@@ -15,26 +15,24 @@ class _SearchUserScreenState extends State<SearchUserScreen>{
     bool _isLoading = false;
 
     Future<void> _searchUser() async {
-    setState(() {
-        _isLoading=true;
-        _foundUser=null;
-    });
-    try {
-        final result = await ApiService.searchUser(_usernameController.text.trim());
         setState(() {
-            _foundUser=result;
-            _isLoading=false;
+            _isLoading = true;
+            _foundUser = null;
         });
-    }
-
-    catch (e) {
-        setState(() {
-            _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('User not found')),
-        );
-    }
+        try {
+            final result = await ApiService.searchUser(_usernameController.text.trim());
+            setState(() {
+                _foundUser = result;
+                _isLoading = false;
+            });
+        } catch (e) {
+            setState(() {
+                _isLoading = false;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('User not found')),
+            );
+        }
     }
 
     @override
@@ -65,12 +63,19 @@ class _SearchUserScreenState extends State<SearchUserScreen>{
                         child: ListTile(
                             title: Text(_foundUser!['username']),
                             subtitle: Text(_foundUser!['email']),
-                            trailing: ElevatedButton(
-                                onPressed: () async {
-                                    final conv = await ApiService.getOrCreateConversation(_foundUser!['id']);
-                                    Navigator.pushNamed(context, '/chat', arguments: conv['id']);
-                                },
-                                child: const Text('Chat')
+                            trailing: SizedBox(
+                                width: 90,
+                                child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                        padding: EdgeInsets.zero,
+                                        minimumSize: const Size(0, 36),
+                                    ),
+                                    onPressed: () async {
+                                        final conv = await ApiService.getOrCreateConversation(_foundUser!['id']);
+                                        Navigator.pushNamed(context, '/chat', arguments: conv['id']);
+                                    },
+                                    child: const Text('Chat'),
+                                ),
                             ),
                         ),
                     )

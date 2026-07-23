@@ -6,6 +6,7 @@ import 'screens/messages.dart';
 import 'services/auth_service.dart';
 import 'services/api_service.dart';
 import 'screens/search_user.dart';
+import 'screens/chat.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +30,8 @@ class MyApp extends StatelessWidget {
         '/': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/messages': (context) => const MessageScreen(),
+        '/search': (context) => const SearchUserScreen(),
+        '/chat': (context) => const ChatScreen(),
       },
     );
   }

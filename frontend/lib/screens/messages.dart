@@ -29,7 +29,13 @@ class MessageScreen extends StatelessWidget {
                         return const Center(child: CircularProgressIndicator());
                     }
                     if(snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
+                        WidgetsBinding.instance.addPostFrameCallback((_) async {
+                            await AuthService.deleteTokens();
+                            if (context.mounted) {
+                                Navigator.pushReplacementNamed(context, '/');
+                            }
+                        });
+                        return const Center(child: CircularProgressIndicator());
                     }
 
                     final conversations = snapshot.data ?? [];
