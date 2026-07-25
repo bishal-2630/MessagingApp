@@ -1,12 +1,14 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
+import '../providers/conversations_provider.dart';
 
-class MessageScreen extends StatelessWidget {
+class MessageScreen extends ConsumerWidget {
     const MessageScreen({super.key});
 
     @override
-    Widget build(BuildContext context) {
+    Widget build(BuildContext context, WidgetRef ref) {
         return Scaffold(
             appBar: AppBar(
                 title: const Text('Messages'),
@@ -21,25 +23,20 @@ class MessageScreen extends StatelessWidget {
                     ),
                 ],
             ),
-            body: FutureBuilder<List<dynamic>>(
-                future: Future.wait([
-                    ApiService.getConversations(),
-                    AuthService.getUsername(),
-                ]),
-                builder: (context, snapshot){
-                    if (snapshot.connectionState == ConnectionState.waiting){
-                        return const Center(child: CircularProgressIndicator());
-                    }
-                    if(snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
-                    }
+            body: ref.watch(conversationsProvider).when(
+                loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                ),
+                error: (error,stack) => Center(child: Text('Error: $error')),
 
-                    final results = snapshot.data as List<dynamic>;
-                    final conversations = results[0] as List<dynamic>? ?? [];
-                    final currentUsername = results[1] as String? ?? '';
+                data: (state) {
+                    final conversations = state.conversations;
+                    final currentUsername = state.currentUsername;
+
                     if(conversations.isEmpty) {
                         return const Center(child: Text('No messages yet. Tap + to start a conversation.'));
                     }
+                    
                     return ListView.builder(
                         itemCount: conversations.length,
                         itemBuilder: (context, index) {
@@ -62,11 +59,10 @@ class MessageScreen extends StatelessWidget {
                                     {
                                         'conversationId': chat['id'],
                                         'username': displayName,
-                                    }
-                                    );
+                                    });
                                 },
                             );
-                        },
+                        },   
                     );
                 },
             ),

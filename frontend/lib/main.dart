@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'screens/login.dart';
 import 'screens/register.dart';
@@ -11,7 +12,11 @@ import 'screens/chat.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final token = await AuthService.getAccessToken();
-  runApp( MyApp(initialRoute: token == null ? '/' : '/messages'));
+  runApp(
+    ProviderScope(
+      child: MyApp(initialRoute: token == null ? '/' : '/messages')
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
