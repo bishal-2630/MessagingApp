@@ -98,6 +98,7 @@ class _LoginScreenState extends State<LoginScreen>{
                                       await AuthService.saveTokens(
                                       access: response['access'],
                                       refresh: response['refresh'],
+                                      username: response['username'],
                                       );
                                       if (!mounted) return;
                                       ScaffoldMessenger.of(context).showSnackBar(

@@ -49,9 +49,19 @@ class _ChatScreenState extends State<ChatScreen> {
         }
     }
 
-        @override
+    @override
     Widget build(BuildContext context) {
-        final int conversationId = ModalRoute.of(context)!.settings.arguments as int;
+        final rawArgs = ModalRoute.of(context)!.settings.arguments;
+        int conversationId = 0;
+        String username = 'Chat';
+
+        if (rawArgs is Map<String, dynamic>) {
+            conversationId = rawArgs['conversationId'];
+            username = rawArgs['username'] ?? 'Chat';
+        } else if (rawArgs is int) {
+            conversationId = rawArgs;
+            username = 'Chat Room #$conversationId';
+        }
 
         // Fetch messages once on page load
         if (_isLoading && _messages.isEmpty) {
@@ -60,7 +70,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
         return Scaffold(
             appBar: AppBar(
-                title: Text('Chat Room #$conversationId'),
+                title: Text(username),
             ),
             body: Column(
                 children: [

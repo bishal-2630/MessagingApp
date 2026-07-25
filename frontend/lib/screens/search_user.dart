@@ -72,7 +72,10 @@ class _SearchUserScreenState extends State<SearchUserScreen>{
                                     ),
                                     onPressed: () async {
                                         final conv = await ApiService.getOrCreateConversation(_foundUser!['id']);
-                                        Navigator.pushNamed(context, '/chat', arguments: conv['id']);
+                                        Navigator.pushNamed(context, '/chat', arguments: {
+                                            'conversationId':conv['id'],
+                                            'username': _foundUser!['username'],
+                                        });
                                     },
                                     child: const Text('Chat'),
                                 ),
