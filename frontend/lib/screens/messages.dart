@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
 import '../providers/conversations_provider.dart';
+import '../providers/auth_provider.dart';
 
 class MessageScreen extends ConsumerWidget {
     const MessageScreen({super.key});
@@ -16,7 +17,7 @@ class MessageScreen extends ConsumerWidget {
                     IconButton(
                         icon: const Icon(Icons.logout),
                         onPressed: () async {
-                            await AuthService.deleteTokens();
+                            await ref.read(authProvider.notifier).logout();
                             if (!context.mounted) return;
                             Navigator.pushReplacementNamed(context, '/');
                         },
