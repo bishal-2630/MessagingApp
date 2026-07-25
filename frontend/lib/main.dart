@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'providers/theme_provider.dart';
 import 'screens/login.dart';
 import 'screens/register.dart';
 import 'config/theme.dart';
@@ -19,16 +20,19 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   final String initialRoute;
   const MyApp({super.key, required this.initialRoute});
 
   
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeProvider);
     return MaterialApp(
       title: 'Chatme',
-      theme: AppTheme.darkTheme,
+      theme: ThemeData.light(),
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       initialRoute: initialRoute,
       
       routes: {
