@@ -1,7 +1,9 @@
-import '../services/api_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/chat_messages_provider.dart';
+import '../providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends ConsumerStatefulWidget {
     const ChatScreen({super.key});
 
     @override
@@ -9,45 +11,8 @@ class ChatScreen extends StatefulWidget {
     
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
     final TextEditingController _messageController = TextEditingController();
-    List<dynamic> _messages = [];
-    bool _isLoading = true;
-
-    Future<void> _fetchmessages(int conversationId) async {
-        try {
-            final messages = await ApiService.getMessages(conversationId);
-            setState(() {
-                _messages = messages;
-                _isLoading = false;
-            });
-        } catch (_) {
-            setState(() {
-                _isLoading = false;
-            });
-
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error loading messages.')),
-            );
-        }
-
-    }
-
-    Future<void> _sendMessage(int conversationId) async {
-        final text  = _messageController.text.trim();
-        if (text.isEmpty) return;
-        _messageController.clear();
-
-        try {
-            await ApiService.sendMessage(conversationId, text);
-            _fetchmessages(conversationId);
-
-        } catch (e) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Failed to send message.')),
-            );
-        }
-    }
 
     @override
     Widget build(BuildContext context) {
@@ -58,15 +23,9 @@ class _ChatScreenState extends State<ChatScreen> {
         if (rawArgs is Map<String, dynamic>) {
             conversationId = rawArgs['conversationId'];
             username = rawArgs['username'] ?? 'Chat';
-        } else if (rawArgs is int) {
-            conversationId = rawArgs;
-            username = 'Chat Room #$conversationId';
         }
-
-        // Fetch messages once on page load
-        if (_isLoading && _messages.isEmpty) {
-            _fetchmessages(conversationId);
-        }
+        final currentUsername = ref.watch(authProvider).username ?? '';
+        final messages = ref.watch(chatMessagesProvider(conversationId));
 
         return Scaffold(
             appBar: AppBar(
@@ -76,68 +35,86 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                     // 1. Messages List
                     Expanded(
-                        child: _isLoading
-                            ? const Center(child: CircularProgressIndicator())
-                            : _messages.isEmpty
+                        child: messages.isEmpty
                                 ? const Center(child: Text('No messages yet. Say hello!'))
                                 : ListView.builder(
                                     padding: const EdgeInsets.all(16.0),
-                                    itemCount: _messages.length,
+                                    itemCount: messages.length,
                                     itemBuilder: (context, index) {
-                                        final msg = _messages[index];
-                                        return Padding(
-                                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                            child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                    Text(
-                                                        msg['sender_username'] ?? 'Unknown',
-                                                        style: const TextStyle(
-                                                            fontWeight: FontWeight.bold,
-                                                            fontSize: 12.0,
-                                                            color: Colors.deepPurpleAccent,
-                                                        ),
-                                                    ),
-                                                    const SizedBox(height: 2.0),
-                                                    Container(
-                                                        padding: const EdgeInsets.all(10.0),
-                                                        decoration: BoxDecoration(
-                                                            color: Colors.grey[800],
-                                                            borderRadius: BorderRadius.circular(8.0),
-                                                        ),
-                                                        child: Text(msg['content'] ?? ''),
-                                                    ),
-                                                ],
-                                            ),
-                                        );
-                                    },
-                                ),
-                    ),
-
-                    // 2. Bottom Input Bar
-                    Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                            children: [
-                                Expanded(
-                                    child: TextField(
-                                        controller: _messageController,
-                                        decoration: const InputDecoration(
-                                            hintText: 'Type a message...',
-                                            border: OutlineInputBorder(),
-                                        ),
+                                        final msg = messages[index];
+                                        final isMe = msg.senderUsername == currentUsername;
+                                return _buildBubble(msg, isMe);
+                            },
+                        ),
+                ),
+                
+                Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                        children: [
+                            Expanded(
+                                child: TextField(
+                                    controller: _messageController,
+                                    decoration: const InputDecoration(
+                                        hintText: 'Type a message...',
+                                        border: OutlineInputBorder(),
                                     ),
                                 ),
-                                const SizedBox(width: 8.0),
-                                IconButton(
-                                    icon: const Icon(Icons.send),
-                                    onPressed: () => _sendMessage(conversationId),
-                                ),
-                            ],
-                        ),
+                            ),
+                            const SizedBox(width: 8.0),
+                            IconButton(
+                                icon: const Icon(Icons.send),
+                                onPressed: () {
+                                    final text = _messageController.text.trim();
+                                    if (text.isEmpty) return;
+                                    ref.read(chatMessagesProvider(conversationId).notifier).sendMessage(text);
+                                    _messageController.clear();
+                                },
+                            ),
+                        ],
+                    ),
+                ),
+            ],
+        ),
+    );
+    }
+
+    Widget _buildBubble(ChatMessage msg, bool isMe) {
+    return Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 4.0),
+            padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+            constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.7,
+            ),
+            decoration: BoxDecoration(
+                color: isMe ? Colors.deepPurpleAccent : Colors.grey[800],
+                borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(16),
+                    topRight: const Radius.circular(16),
+                    bottomLeft: isMe ? const Radius.circular(16) : Radius.zero,
+                    bottomRight: isMe ? Radius.zero : const Radius.circular(16),
+                ),
+            ),
+            child: Column(
+                crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                    if (!isMe)
+                        Text(msg.senderUsername,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                    Text(msg.content),
+                    const SizedBox(height: 2),
+                    Text(
+                        msg.createdAt.substring(11, 16), // Shows HH:mm
+                        style: const TextStyle(fontSize: 10, color: Colors.white60),
                     ),
                 ],
             ),
-        );
-    }
+        ),
+    );
 }
+}
+
+
+
