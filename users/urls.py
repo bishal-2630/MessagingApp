@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views 
-from .views import RegisterView, LoginView, ProfileView, UserViewSet, UserSearchView, RegisterFCMTokenView, SendFCMNotificationView
+from .views import RegisterView, LoginView, ProfileView, UserViewSet, UserSearchView, RegisterFCMTokenView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
