@@ -1,4 +1,5 @@
-from .models import User
+from .models import User 
+from chat.models import FCMDeviceToken
 from functools import partial
 from users.serializers import ProfileSerializer
 from rest_framework import status, viewsets
@@ -70,4 +71,17 @@ class UserSearchView(APIView):
         serializer = UserSerializer(user)
         return Response(serializer.data)
         
+
+class RegisterFCMTokenView(APIView):
+    def post(self, request):
+        token = request.data.get('token')
+        if not token:
+            return Response({'Error': 'Token is required.'},status=status.HTTP_400_BAD_REQUEST)
+
+        obj, created = FCMDeviceToken.objects.update_or_create(
+            token=token,
+            defaults={'user': request.user}
+            )
+        return Response({'Success': 'Token registered successfully.'},status=status.HTTP_200_OK)
+
         

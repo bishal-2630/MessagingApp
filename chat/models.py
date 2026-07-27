@@ -1,3 +1,4 @@
+from enum import unique
 from django.db import models
 from django.conf import settings
 
@@ -10,3 +11,12 @@ class Message(models.Model):
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+class FCMDeviceToken(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='fcm_tokens')
+    token = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s FCM Token"
