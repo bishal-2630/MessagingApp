@@ -43,11 +43,11 @@ class MessageScreen extends ConsumerWidget {
                         itemBuilder: (context, index) {
                             final chat = conversations[index];
                             final participants = chat['participants'] as List<dynamic>? ?? [];
-                            final names = participants.map((p) => p['username'] as String? ?? '')
+                            final otherParticipants = participants.map((p) => p['username'] as String? ?? '')
                             .where((n) => n.isNotEmpty && n != currentUsername)
                             .join(', ');
 
-                            final displayName = names.isNotEmpty ? names : 'Chat Room #${chat['id']}';
+                            final displayName = otherParticipants.isNotEmpty ? otherParticipants : 'You';
                             
                             return ListTile(
                                 leading: CircleAvatar(

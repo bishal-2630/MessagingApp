@@ -7,7 +7,7 @@ class ChatScreen extends ConsumerStatefulWidget {
     const ChatScreen({super.key});
 
     @override
-    State<ChatScreen> createState()=> _ChatScreenState();
+    ConsumerState<ChatScreen> createState()=> _ChatScreenState();
     
 }
 
@@ -100,13 +100,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             child: Column(
                 crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
-                    if (!isMe)
-                        Text(msg.senderUsername,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                     Text(msg.content),
                     const SizedBox(height: 2),
                     Text(
-                        msg.createdAt.substring(11, 16), // Shows HH:mm
+                        msg.createdAt.substring(11, 16), 
                         style: const TextStyle(fontSize: 10, color: Colors.white60),
                     ),
                 ],
