@@ -11,8 +11,26 @@ class ChatScreen extends ConsumerStatefulWidget {
     
 }
 
-class _ChatScreenState extends ConsumerState<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetBindingObserver {
     final TextEditingController _messageController = TextEditingController();
+    int? _conversationId;
+    @override
+    void initState() {
+        super.initState();
+        WidgetsBinding.instance.addObserver(this);
+    }
+    @override
+    void dispose() {
+        WidgetsBinding.instance.removeObserver(this);
+        _messageController.dispose();
+        super.dispose();
+    }
+    @override
+    void didChangeAppLifecycleState(AppLifecycleState state) {
+        if (state == AppLifecycleState.resumed && _conversationId != null) {
+            ref.read(chatMessagesProvider(_conversationId!).notifier).init(_conversationId!);
+        }
+    }
 
     @override
     Widget build(BuildContext context) {
@@ -23,6 +41,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         if (rawArgs is Map<String, dynamic>) {
             conversationId = rawArgs['conversationId'];
             username = rawArgs['username'] ?? 'Chat';
+            _conversationId = conversationId;
         }
         final currentUsername = ref.watch(authProvider).username ?? '';
         final messages = ref.watch(chatMessagesProvider(conversationId));

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/notification_service.dart';
 import '../providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
@@ -100,6 +101,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>{
                                       refresh: response['refresh'],
                                       username: response['username'],
                                       );
+                                      await NotificationService.init();
                                       if (!mounted) return;
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(content: Text('Login successfull!')),
