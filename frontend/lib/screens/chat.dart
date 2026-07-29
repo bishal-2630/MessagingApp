@@ -11,7 +11,7 @@ class ChatScreen extends ConsumerStatefulWidget {
     
 }
 
-class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetBindingObserver {
+class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObserver {
     final TextEditingController _messageController = TextEditingController();
     int? _conversationId;
     @override
