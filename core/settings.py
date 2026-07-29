@@ -161,4 +161,4 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'your-app-password')
 
 AUTH_USER_MODEL = 'users.User'
 
-X_FRAME_OPTIONS = 'ALLOWALL'
+

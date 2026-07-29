@@ -6,7 +6,7 @@ class WebSocketService {
 
     Future<void> connect(int conversationId) async {
         final token = await AuthService.getAccessToken();
-        final uri = Uri.parse('ws://10.0.2.2:8000/ws/chat/$conversationId/?token=$token');
+        final uri = Uri.parse('wss://bishall10-chatme.hf.space/ws/chat/$conversationId/?token=$token');
         _channel = WebSocketChannel.connect(uri);
     }
 

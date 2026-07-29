@@ -4,7 +4,7 @@ import 'auth_service.dart';
 class ApiService {
     static final Dio _dio = Dio(
         BaseOptions(
-            baseUrl: 'http://10.0.2.2:8000/api/',
+            baseUrl: 'https://bishall10-chatme.hf.space/api/',
             contentType: 'application/json',
         ),
     )..interceptors.add(
@@ -28,7 +28,7 @@ class ApiService {
                     final refreshToken = await AuthService.getRefreshToken();
                     if(refreshToken != null){
                         try {
-                            final response = await Dio().post('http://10.0.2.2:8000/api/token/refresh/',
+                            final response = await Dio().post('https://bishall10-chatme.hf.space/api/token/refresh/',
                             data: {'refresh': refreshToken},
                             );
                             final newAccessToken = response.data['access'];

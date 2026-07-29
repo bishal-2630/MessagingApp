@@ -6,6 +6,7 @@ def health_check(request):
     return JsonResponse({"status": "online", "message": "MessagingApp Backend Server is Running!"})
 
 urlpatterns = [
+    path('', health_check), 
     path('admin/', admin.site.urls),
     path('api/', include('users.urls')),
     path('api/', include('chat.urls')),
