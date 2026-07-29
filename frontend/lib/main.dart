@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'providers/theme_provider.dart';
 import 'screens/login.dart';
@@ -12,7 +14,11 @@ import 'screens/chat.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   final token = await AuthService.getAccessToken();
+  if(token !=null) {
+    await NotificationService.init();
+  }
   runApp(
     ProviderScope(
       child: MyApp(initialRoute: token == null ? '/' : '/messages')

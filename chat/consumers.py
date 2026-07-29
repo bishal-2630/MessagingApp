@@ -54,6 +54,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                    'created_at': msg.created_at.isoformat(), 
                 }
             )
+            await self.notify_other_participants(user,self.conversation_id, content)
         except Exception as e:
             await self.send(text_data=json.dumps({'error': str(e)}))
     
@@ -76,6 +77,26 @@ class ChatConsumer(AsyncWebsocketConsumer):
             sender=user,
             content=content,
         )
+
+    @database_sync_to_async
+    def notify_other_participants(self, sender, conversation_id, content):
+        from .models import Conversation
+        from .notifications import send_push_notification
+        try:
+            conv = Conversation.objects.get(id=conversation_id)
+            other_users = conv.participants.exclude(id=sender.id)
+            for recipient in other_users:
+                send_push_notification(
+                    user=recipient,
+                    title=f'New message from {sender.username}',
+                    body=content,
+                    data={"conversationId": str(conversation_id)}   
+                )
+        except Exception as e:
+            print(f"Error notifying participants {e}")
+        
+
+    
 
 
 
