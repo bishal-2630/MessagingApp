@@ -32,6 +32,8 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
+    pagination_class = None
+    
     def get_queryset(self):
         conversation_id = self.request.query_params.get('conversation')
         if not conversation_id:

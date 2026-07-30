@@ -100,7 +100,11 @@ static Future<Map<String, dynamic>> getOrCreateConversation(int targetUserId) as
             'messages/',
             queryParameters: {'conversation': conversationId},
         );
-        return response.data['results'];
+        // Handle both paginated (dict with 'results') and unpaginated (list) responses
+        if (response.data is Map && response.data.containsKey('results')) {
+            return response.data['results'];
+        }
+        return response.data as List<dynamic>;
     }
 
     static Future<Map<String, dynamic>> sendMessage(int conversationId, String content) async {
