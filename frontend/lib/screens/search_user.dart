@@ -75,6 +75,7 @@ class _SearchUserScreenState extends State<SearchUserScreen>{
                                         Navigator.pushNamed(context, '/chat', arguments: {
                                             'conversationId':conv['id'],
                                             'username': _foundUser!['username'],
+                                            'targetUserId': _foundUser!['id'],
                                         });
                                     },
                                     child: const Text('Chat'),

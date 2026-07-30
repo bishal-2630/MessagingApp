@@ -60,6 +60,11 @@ class MessageScreen extends ConsumerWidget {
                                     {
                                         'conversationId': chat['id'],
                                         'username': displayName,
+                                        'targetUserId': participants
+                                            .firstWhere(
+                                                (p) => p['username'] != currentUsername,
+                                                orElse: () => {},
+                                            )['id'],
                                     });
                                 },
                             );
