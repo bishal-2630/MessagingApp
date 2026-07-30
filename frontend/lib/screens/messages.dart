@@ -48,13 +48,40 @@ class MessageScreen extends ConsumerWidget {
                             .join(', ');
 
                             final displayName = otherParticipants.isNotEmpty ? otherParticipants : 'You';
+                            final lastMsg = chat['last_message'];
+                            final lastMsgText = lastMsg != null && lastMsg['content'] != null ? lastMsg['content'] as String: 'No messages yet';
                             
                             return ListTile(
-                                leading: CircleAvatar(
-                                    child: Text(displayName.isNotEmpty ? displayName[0].toUpperCase() : '?'),
+                                leading: Stack(
+                                    children: [
+                                        CircleAvatar(
+                                            child: Text(displayName.isNotEmpty ? displayName[0].toUpperCase() : '?'),
+                                        ),
+                                        if (participants.any((p) =>
+                                            p['username'] != currentUsername &&
+                                            (p['profile']?['is_online'] == true)))
+                                            Positioned(
+                                                right: 0,
+                                                bottom: 0,
+                                                child: Container(
+                                                    width: 12,
+                                                    height: 12,
+                                                    decoration: BoxDecoration(
+                                                        color: Colors.green,
+                                                        shape: BoxShape.circle,
+                                                        border: Border.all(color: Theme.of(context).scaffoldBackgroundColor, width: 2),
+                                                    ),
+                                                ),
+                                            ),
+                                    ],
                                 ),
                                 title: Text(displayName),
-                                subtitle: Text('Tap to open'),
+                                subtitle: Text(
+                                    lastMsgText,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(color: Colors.white70),
+                                ),
                                 onTap: () {
                                     Navigator.pushNamed(context, '/chat', arguments: 
                                     {

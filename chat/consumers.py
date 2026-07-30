@@ -50,7 +50,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                    'conversation': int(self.conversation_id),
                    'sender': user.id,
                    'sender_username': user.username, 
-                   'content': content, 
+                   'content': content,
+                   'is_delivered': msg.is_delivered,
+                   'is_read': msg.is_read, 
                    'created_at': msg.created_at.isoformat(), 
                 }
             )
