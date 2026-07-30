@@ -121,6 +121,10 @@ static Future<Map<String, dynamic>> getOrCreateConversation(int targetUserId) as
     static Future<void> registerFCMToken(String token) async {
         await _dio.post('fcm/token/', data: {'token': token});
     }
-    
+
+    static Future<Map<String, dynamic>> getUserStatus(int userId) async {
+        final response = await _dio.get('users/$userId/status/');
+        return response.data;
+    }   
 
 }

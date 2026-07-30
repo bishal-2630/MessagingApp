@@ -9,9 +9,9 @@ from rest_framework.views import APIView
 from .serializers import UserSerializer
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
+from django.utils import timezone
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-
 
 
 class RegisterView(APIView):
@@ -84,4 +84,26 @@ class RegisterFCMTokenView(APIView):
             )
         return Response({'Success': 'Token registered successfully.'},status=status.HTTP_200_OK)
 
-        
+
+class UserStatusView(APIView):
+    def get(self, request, user_id):
+        try:
+            from .models import Profile
+            profile = Profile.objects.get(user_id=user_id)
+            if profile.is_online:
+                return Response({'is_online': True, 'last_seen': ''})
+            diff = timezone.now() - profile.last_active
+            minutes = int(diff.total_seconds() / 60)
+            if minutes < 1:
+                last_seen = 'Last seen just now'
+            elif minutes < 60:
+                last_seen = f'Last seen {minutes}m ago'
+            elif minutes < 1440:
+                hours = int(minutes / 60)
+                last_seen = f'Last seen {hours}h ago'
+            else:
+                days = minutes // 1440
+                last_seen = f'Last seen {days}d ago'
+            return Response({'is_online': False, 'last_seen': last_seen})
+        except Exception:
+            return Response({'is_online': False, 'last_seen': ''})

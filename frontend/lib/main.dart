@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/notification_service.dart';
+import 'services/websocket_service.dart';
 import 'package:flutter/material.dart';
 import 'providers/theme_provider.dart';
 import 'screens/login.dart';
@@ -21,6 +22,8 @@ void main() async {
   final token = await AuthService.getAccessToken();
   if(token !=null) {
     await NotificationService.init();
+    final wsService = WebSocketService();
+    await wsService.connectUser();
 
     // 1. App is in background (but not closed)
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {

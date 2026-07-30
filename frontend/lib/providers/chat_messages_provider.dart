@@ -8,6 +8,8 @@ import '../services/websocket_service.dart';
     final int sender;
     final String senderUsername;
     final String content;
+    final bool isDelivered;
+    final bool isRead;
     final String createdAt;
 
     ChatMessage({
@@ -15,6 +17,8 @@ import '../services/websocket_service.dart';
         required this.sender,
         required this.senderUsername,
         required this.content,
+        required this.isDelivered,
+        required this.isRead,
         required this.createdAt,
     });
 
@@ -24,6 +28,8 @@ import '../services/websocket_service.dart';
             sender: json['sender'],
             senderUsername: json['sender_username'],
             content: json['content'],
+            isDelivered: json['is_delivered'] ?? false,
+            isRead: json['is_read'] ?? false,
             createdAt: json['created_at'],
         );
     }
@@ -51,6 +57,8 @@ import '../services/websocket_service.dart';
                     sender: -1, 
                     senderUsername: 'System Error', 
                     content: 'Failed to load messages: $e', 
+                    isDelivered: false,
+                    isRead: false,
                     createdAt: DateTime.now().toIso8601String()
                 )
             ];

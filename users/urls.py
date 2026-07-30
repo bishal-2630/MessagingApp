@@ -20,4 +20,5 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('users/search/', UserSearchView.as_view(), name='user_search'),
     path('fcm/token/', RegisterFCMTokenView.as_view(), name='register_fcm_token'),
+    path('users/<int:user_id>/status/', views.UserStatusView.as_view(), name='user_status'),
 ] + router.urls
