@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'providers/theme_provider.dart';
@@ -20,17 +21,32 @@ void main() async {
   final token = await AuthService.getAccessToken();
   if(token !=null) {
     await NotificationService.init();
-  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    final convIdStr = message.data['conversation_id'];
-    if(convIdStr != null) {
-      navigatorKey.currentState?.pushNamed('/chat', arguments: {
-        'conversationId': int.parse(convIdStr),
-        'username': message.notification?.title?.replaceAll('New Message: ', '') ?? 'Chat',
-      });
-      
+
+    // 1. App is in background (but not closed)
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      final convIdStr = message.data['conversationId'];
+      if(convIdStr != null) {
+        navigatorKey.currentState?.pushNamed('/chat', arguments: {
+          'conversationId': int.parse(convIdStr),
+          'username': message.notification?.title?.replaceAll('New message from ', '') ?? 'Chat',
+        });
+      }
+    });
+
+    // 2. App was completely closed (terminated)
+    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      final convIdStr = initialMessage.data['conversationId'];
+      if (convIdStr != null) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          navigatorKey.currentState?.pushNamed('/chat', arguments: {
+            'conversationId': int.parse(convIdStr),
+            'username': initialMessage.notification?.title?.replaceAll('New message from ', '') ?? 'Chat'
+          });
+        });
+      }
     }
-  });
-}
+  }
   runApp(
     ProviderScope(
       child: MyApp(initialRoute: token == null ? '/' : '/messages')
