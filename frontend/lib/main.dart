@@ -27,7 +27,7 @@ void main() async {
       final convIdStr = message.data['conversationId'];
       if(convIdStr != null) {
         navigatorKey.currentState?.pushNamed('/chat', arguments: {
-          'conversationId': int.parse(convIdStr),
+          'conversationId': int.parse(convIdStr.toString()),
           'username': message.notification?.title?.replaceAll('New message from ', '') ?? 'Chat',
         });
       }
@@ -40,7 +40,7 @@ void main() async {
       if (convIdStr != null) {
         Future.delayed(const Duration(milliseconds: 500), () {
           navigatorKey.currentState?.pushNamed('/chat', arguments: {
-            'conversationId': int.parse(convIdStr),
+            'conversationId': int.parse(convIdStr.toString()),
             'username': initialMessage.notification?.title?.replaceAll('New message from ', '') ?? 'Chat'
           });
         });

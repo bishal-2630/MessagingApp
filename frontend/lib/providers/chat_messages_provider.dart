@@ -34,15 +34,27 @@ import '../services/websocket_service.dart';
     ChatMessageNotifier() : super([]);
 
     Future<void> init(int conversationId) async {
-        final history = await ApiService.getMessages(conversationId);
-        state = history.map((m) => ChatMessage.fromJson(m)).toList();
-        
-        await _wsService.connect(conversationId);
-        _wsService.messages.listen((raw) {
-            final data = jsonDecode(raw as String);
-            final newMessage = ChatMessage.fromJson(data);
-            state = [...state, newMessage];
-        });  
+        try {
+            final history = await ApiService.getMessages(conversationId);
+            state = history.map((m) => ChatMessage.fromJson(m)).toList();
+            
+            await _wsService.connect(conversationId);
+            _wsService.messages.listen((raw) {
+                final data = jsonDecode(raw as String);
+                final newMessage = ChatMessage.fromJson(data);
+                state = [...state, newMessage];
+            });  
+        } catch (e) {
+            state = [
+                ChatMessage(
+                    id: -1, 
+                    sender: -1, 
+                    senderUsername: 'System Error', 
+                    content: 'Failed to load messages: $e', 
+                    createdAt: DateTime.now().toIso8601String()
+                )
+            ];
+        }
     }
     void sendMessage(String content) {
         _wsService.sendMessage(content);
