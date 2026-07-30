@@ -12,13 +12,25 @@ import 'services/api_service.dart';
 import 'screens/search_user.dart';
 import 'screens/chat.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   final token = await AuthService.getAccessToken();
   if(token !=null) {
     await NotificationService.init();
-  }
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    final convIdStr = message.data['conversation_id'];
+    if(convIdStr != null) {
+      navigatorKey.currentState?.pushNamed('/chat', arguments: {
+        'conversationId': int.parse(convIdStr),
+        'username': message.notification?.title?.replaceAll('New Message: ', '') ?? 'Chat',
+      });
+      
+    }
+  });
+}
   runApp(
     ProviderScope(
       child: MyApp(initialRoute: token == null ? '/' : '/messages')
@@ -35,6 +47,7 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Chatme',
       theme: ThemeData.light(),
       darkTheme: AppTheme.darkTheme,

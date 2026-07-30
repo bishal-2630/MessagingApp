@@ -28,7 +28,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     @override
     void didChangeAppLifecycleState(AppLifecycleState state) {
         if (state == AppLifecycleState.resumed && _conversationId != null) {
-            ref.read(chatMessagesProvider(_conversationId!).notifier).init(_conversationId!);
+            ref.invalidate(chatMessagesProvider(_conversationId!));
         }
     }
 
