@@ -94,6 +94,45 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 )
         except Exception as e:
             print(f"Error notifying participants {e}")
+            
+class UserConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        user = self.scope.get('user')
+        if not user or not user.is_authenticated:
+            await self.close(code=4001)
+            return
+
+        self.user_group_name = f'user_{user.id}'
+        await self.channel_layer.group_add(
+            self.user_group_name,
+            self.channel_name
+        )
+
+        await self.accept()
+
+        await self.set_online_status(user, True)
+
+    async def disconnect(self, close_code):
+        user = self.scope.get('user')
+        if user and user.is_authenticated:
+            await self.channel_layer.group_discard(
+                self.user_group_name,
+                self.channel_name
+            )
+
+            await self.set_online_status(user, False)
+    
+    @database_sync_to_async
+    def set_online_status(self, user, is_online):
+        from users.models import Profile
+        try:
+            profile = Profile.objects.get(user=user)
+            profile.is_online = is_online
+            profile.save()
+        except Profile.DoesNotExist:
+            pass
+
+    
         
 
     
