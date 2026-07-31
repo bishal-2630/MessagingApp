@@ -20,26 +20,28 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   final token = await AuthService.getAccessToken();
-  if(token !=null) {
+
+  if (token != null) {
     await NotificationService.init();
+
+    // Connect global WebSocket to track online status
     final wsService = WebSocketService();
     await wsService.connectUser();
     wsService.userMessages.listen(
-      (data) {
-
-      },
+      (data) { /* Handle global events here later */ },
       onDone: () async {
-        await Future.delayed(const Duration(milliseconds: 3));
+        // Auto-reconnect if connection drops
+        await Future.delayed(const Duration(seconds: 3));
         await wsService.connectUser();
       },
       onError: (_) {},
       cancelOnError: false,
     );
-  }
-    
+
+    // 1. App is in background (but not closed)
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       final convIdStr = message.data['conversationId'];
-      if(convIdStr != null) {
+      if (convIdStr != null) {
         navigatorKey.currentState?.pushNamed('/chat', arguments: {
           'conversationId': int.parse(convIdStr.toString()),
           'username': message.notification?.title?.replaceAll('New message from ', '') ?? 'Chat',
@@ -47,7 +49,7 @@ void main() async {
       }
     });
 
-    
+    // 2. App was completely closed (terminated)
     final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
     if (initialMessage != null) {
       final convIdStr = initialMessage.data['conversationId'];
@@ -61,18 +63,18 @@ void main() async {
       }
     }
   }
+
   runApp(
     ProviderScope(
-      child: MyApp(initialRoute: token == null ? '/' : '/messages')
+      child: MyApp(initialRoute: token == null ? '/' : '/messages'),
     ),
   );
-
+}
 
 class MyApp extends ConsumerWidget {
   final String initialRoute;
   const MyApp({super.key, required this.initialRoute});
 
-  
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
@@ -83,7 +85,6 @@ class MyApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       initialRoute: initialRoute,
-      
       routes: {
         '/': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
@@ -91,53 +92,6 @@ class MyApp extends ConsumerWidget {
         '/search': (context) => const SearchUserScreen(),
         '/chat': (context) => const ChatScreen(),
       },
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }
