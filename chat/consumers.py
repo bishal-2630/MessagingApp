@@ -70,6 +70,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return conv.participants.filter(id=user.id).exists()
         except Conversation.DoesNotExist:
             return False
+    
+    @database_sync_to_async
+    def save_message(self, user, conversation_id, content):
+        conv = Conversation.objects.get(id=conversation_id)
+        other_user = conv.participants.exclude(id=user.id).first()
+        
+        
+        is_delivered = False
+        if other_user and hasattr(other_user, 'profile'):
+            is_delivered = other_user.profile.is_online
+            
+        return Message.objects.create(
+            conversation=conv,
+            sender=user,
+            content=content,
+            is_delivered=is_delivered,
+        )
 
 
     @database_sync_to_async
@@ -126,22 +143,7 @@ class UserConsumer(AsyncWebsocketConsumer):
         except Profile.DoesNotExist:
             pass
 
-    @database_sync_to_async
-    def save_message(self, user, conversation_id, content):
-        conv = Conversation.objects.get(id=conversation_id)
-        other_user = conv.participants.exclude(id=user.id).first()
-        
-        
-        is_delivered = False
-        if other_user and hasattr(other_user, 'profile'):
-            is_delivered = other_user.profile.is_online
-            
-        return Message.objects.create(
-            conversation=conv,
-            sender=user,
-            content=content,
-            is_delivered=is_delivered,
-        )
+    
 
         
 
