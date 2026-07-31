@@ -70,15 +70,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return conv.participants.filter(id=user.id).exists()
         except Conversation.DoesNotExist:
             return False
-    
-    @database_sync_to_async
-    def save_message(self, user, conversation_id, content):
-        conv = Conversation.objects.get(id=conversation_id)
-        return Message.objects.create(
-            conversation=conv,
-            sender=user,
-            content=content,
-        )
+
 
     @database_sync_to_async
     def notify_other_participants(self, sender, conversation_id, content):

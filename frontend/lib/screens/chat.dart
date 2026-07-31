@@ -99,7 +99,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                                             width: 12,
                                             height: 12,
                                             decoration: BoxDecoration(
-                                                color: Colors.blue,
+                                                color: Colors.green,
                                                 shape: BoxShape.circle,
                                                 border: Border.all(
                                                     color: Theme.of(context).scaffoldBackgroundColor, 
