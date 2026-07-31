@@ -40,12 +40,11 @@ class MessageViewSet(viewsets.ModelViewSet):
             return Message.objects.none()
         user = self.request.user
         qs = Message.objects.filter(conversation_id=conversation_id).order_by('created_at')
+        qs.filter(is_delivered=False).update(is_delivered=True)
         unread_incoming = qs.exclude(sender=user).filter(is_read=False)
         if unread_incoming.exists():
-            unread_incoming.update(is_read=True, is_delivered=True)
+            unread_incoming.update(is_read=True)
         return qs
-        
-        
 
 
     def perform_create(self, serializer):
