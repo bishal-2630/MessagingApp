@@ -89,7 +89,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             conversation=conv,
             sender=user,
             content=content,
-            is_delivered=is_delivered,
+            is_delivered=True,
         )
 
 
