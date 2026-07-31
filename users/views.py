@@ -89,7 +89,7 @@ class UserStatusView(APIView):
     def get(self, request, user_id):
         try:
             from .models import Profile
-            profile = Profile.objects.get(user_id=user_id)
+            profile, _ = Profile.objects.get_or_create(user_id=user_id)
             if profile.is_online:
                 return Response({'is_online': True, 'last_seen': ''})
             diff = timezone.now() - profile.last_active

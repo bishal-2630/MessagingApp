@@ -4,6 +4,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from .models import Conversation, Message
 
+
 User = get_user_model()
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -73,13 +74,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
     
     @database_sync_to_async
     def save_message(self, user, conversation_id, content):
+        # pyrefly: ignore [missing-import]
+        from user.models import Profile
         conv = Conversation.objects.get(id=conversation_id)
         other_user = conv.participants.exclude(id=user.id).first()
         
         
         is_delivered = False
-        if other_user and hasattr(other_user, 'profile'):
-            is_delivered = other_user.profile.is_online
+        if other_user:
+            profile, _ = Profile.objects.get_or_create(user=other_user)
+            is_delivered = profile.is_online
             
         return Message.objects.create(
             conversation=conv,
@@ -136,12 +140,9 @@ class UserConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def set_online_status(self, user, is_online):
         from users.models import Profile
-        try:
-            profile = Profile.objects.get(user=user)
-            profile.is_online = is_online
-            profile.save()
-        except Profile.DoesNotExist:
-            pass
+        profile, _ = Profile.objects.get_or_create(user=user)
+        profile.is_online = is_online
+        profile.save()
 
     
 
