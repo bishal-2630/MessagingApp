@@ -24,8 +24,19 @@ void main() async {
     await NotificationService.init();
     final wsService = WebSocketService();
     await wsService.connectUser();
+    wsService.userMessages.listen(
+      (data) {
 
-    // 1. App is in background (but not closed)
+      },
+      onDone: () async {
+        await Future.delayed(const Duration(milliseconds: 3));
+        await wsService.connectUser();
+      },
+      onError: (_) {},
+      cancelOnError: false,
+    );
+  }
+    
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       final convIdStr = message.data['conversationId'];
       if(convIdStr != null) {
@@ -36,7 +47,7 @@ void main() async {
       }
     });
 
-    // 2. App was completely closed (terminated)
+    
     final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
     if (initialMessage != null) {
       final convIdStr = initialMessage.data['conversationId'];
@@ -55,7 +66,7 @@ void main() async {
       child: MyApp(initialRoute: token == null ? '/' : '/messages')
     ),
   );
-}
+
 
 class MyApp extends ConsumerWidget {
   final String initialRoute;
