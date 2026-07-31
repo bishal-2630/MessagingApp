@@ -75,7 +75,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def save_message(self, user, conversation_id, content):
         # pyrefly: ignore [missing-import]
-        from user.models import Profile
+        from users.models import Profile
         conv = Conversation.objects.get(id=conversation_id)
         other_user = conv.participants.exclude(id=user.id).first()
         
