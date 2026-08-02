@@ -88,7 +88,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
 
     @override
     Widget build(BuildContext context) {
-        final rawArgs = ModalRoute.of(context)!.settings.arguments;
+        final rawArgs = ModalRoute.of(context)?.settings.arguments;
         int conversationId = 0;
         String username = 'Chat';
 
