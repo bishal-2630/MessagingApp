@@ -111,8 +111,8 @@ class MessageScreen extends ConsumerWidget {
                                                 (p) => p['username'] != currentUsername,
                                                 orElse: () => {},
                                             )['id'],
-                                    ref.invalidate(conversationsProvider);
                                     });
+                                    ref.invalidate(conversationsProvider);
                                 },
                             );
                         },   

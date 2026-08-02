@@ -37,7 +37,7 @@ class ChatMessage {
 
 class ChatMessageNotifier extends StateNotifier<List<ChatMessage>> {
     final WebSocketService _wsService = WebSocketService();
-    bool _isInititalized = false;
+    bool _isInitialized = false;
     ChatMessageNotifier() : super([]);
 
     Future<void> init(int conversationId) async {
