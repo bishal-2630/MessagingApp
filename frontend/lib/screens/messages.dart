@@ -4,12 +4,14 @@ import '../services/auth_service.dart';
 import '../services/api_service.dart';
 import '../providers/conversations_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/chat_messages_provider.dart';
 
 class MessageScreen extends ConsumerWidget {
     const MessageScreen({super.key});
 
     @override
     Widget build(BuildContext context, WidgetRef ref) {
+        final typingState = ref.watch(typingProvider);
         return Scaffold(
             appBar: AppBar(
                 title: const Text('Messages'),
@@ -51,6 +53,8 @@ class MessageScreen extends ConsumerWidget {
                             final lastMsg = chat['last_message'];
                             final lastMsgText = lastMsg != null && lastMsg['content'] != null ? lastMsg['content'] as String: 'No messages yet';
                             final bool isMyLastMsg = lastMsg != null && lastMsg['sender_username'] == currentUsername;
+                            final int conversationIdInt = chat['id'] as int;
+                            final isSomeoneTyping = typingState[conversationIdInt] ?? false;
                             final bool isDelivered = lastMsg != null && (lastMsg['is_delivered'] ?? false);
                             final bool isRead = lastMsg != null && (lastMsg['is_read'] ?? false);
                             
@@ -81,21 +85,24 @@ class MessageScreen extends ConsumerWidget {
                                 title: Text(displayName),
                                 subtitle: Row(
                                     children: [
-                                    if (isMyLastMsg) ...[
+                                    if (isMyLastMsg && !isSomeoneTyping) ...[
                                         Icon(
                                             isRead ? Icons.done_all
                                             : isDelivered ? Icons.done : Icons.done,
-                                            size: 14,
+                                            size: 16,
                                             color: isRead ? const Color(0xFF34B7F1) : Colors.white70,
                                         ),
                                         const SizedBox(width: 4),
                                     ],
                                     Expanded(
                                         child: Text(
-                                            lastMsgText,
+                                            isSomeoneTyping ? 'Typing...': lastMsgText,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(color: Colors.white70),
+                                            style: TextStyle(
+                                                color: isSomeoneTyping ? const Color(0xFF34B7F1) : Colors.white70,
+                                                fontStyle: isSomeoneTyping ? FontStyle.italic : FontStyle.normal,
+                                            ),
                                         ),
                                     ),
                                     ],

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 
+final typingProvider = StateProvider<Map<int, bool>>((ref) => {});
+
 class ChatMessage {
     final int id;
     final int sender;
@@ -37,14 +39,24 @@ class ChatMessage {
 
 class ChatMessageNotifier extends StateNotifier<List<ChatMessage>> {
     final WebSocketService _wsService = WebSocketService();
+    final Ref _ref;
+    final int _conversationId;
     bool _isInitialized = false;
-    ChatMessageNotifier() : super([]);
+    ChatMessageNotifier(this._ref, this._conversationId) : super([]);
 
     Future<void> init(int conversationId) async {
         await _wsService.connect(conversationId);
         _wsService.sendReadReceipt(conversationId);
         _wsService.messages.listen((raw) {
             final data = jsonDecode(raw as String);
+            if(data['type'] == 'typing_status') {
+                _ref.read(typingProvider.notifier).update((state) {
+                    final updated = Map<int, bool>.from(state);
+                    updated[conversationId] = data['is_typing'] ?? false;
+                    return updated;
+                });
+                return;
+            }
             if(data['type'] == 'message_read') {
                 state = state.map((msg) => 
                 ChatMessage(
@@ -92,7 +104,7 @@ class ChatMessageNotifier extends StateNotifier<List<ChatMessage>> {
 }
 
 final chatMessagesProvider = StateNotifierProvider.family<ChatMessageNotifier, List<ChatMessage>, int>((ref, conversationId) {
-    final notifier = ChatMessageNotifier();
+    final notifier = ChatMessageNotifier(ref, conversationId);
     notifier.init(conversationId);
     return notifier;
 });
