@@ -54,7 +54,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             
             if data.get('type') == 'read_receipt':
                 user = self.scope.get('user')
-                await self.mark_messages_as_read(user, self.conversation_id)
+                await self.mark_messages_read(user, self.conversation_id)
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
