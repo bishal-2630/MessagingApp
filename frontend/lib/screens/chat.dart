@@ -24,6 +24,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     bool _hasFetchedStatus = false;
     bool _isOtherUserTyping = false;
     Timer? _typingTimer;
+    final ScrollController _scrollController = ScrollController();
 
     @override
     void initState() {
@@ -51,10 +52,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     void dispose() {
         WidgetsBinding.instance.removeObserver(this);
         _messageController.dispose();
+        _scrollController.dispose();
         _typingTimer?.cancel();
         ref.invalidate(conversationsProvider);
         super.dispose();
     }
+
+    void _scrollToBottom() {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_scrollController.hasClients) {
+                _scrollController.animateTo(
+                    _scrollController.position.maxScrollExtent,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                );
+            }
+        });
+}
 
     @override
     void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -105,6 +119,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
 
         final currentUsername = ref.watch(authProvider).username ?? '';
         final messages = ref.watch(chatMessagesProvider(conversationId));
+        _scrollToBottom();
 
         return Scaffold(
             appBar: AppBar(
@@ -166,6 +181,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                         child: ListView.builder(
                             padding: const EdgeInsets.all(16.0),
                             itemCount: messages.length + (_isOtherUserTyping ? 1 : 0),
+                            controller: _scrollController,
                             itemBuilder: (context, index) {
                                 if (index == messages.length) {
                                     return const TypingBubble();
