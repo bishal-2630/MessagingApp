@@ -22,7 +22,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     bool _isOnline = false;
     String _lastSeenText = '';
     bool _hasFetchedStatus = false;
-    bool _isOtherUserTyping = false;
     Timer? _typingTimer;
     final ScrollController _scrollController = ScrollController();
 
@@ -30,22 +29,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     void initState() {
         super.initState();
         WidgetsBinding.instance.addObserver(this);
-
-        // Listen for typing events from the other user
-        final wsService = WebSocketService();
-        wsService.messages.listen((raw) {
-            try {
-                final data = jsonDecode(raw as String);
-                if (data['type'] == 'typing_status') {
-                    final currentUsername = ref.read(authProvider).username;
-                    if (data['username'] != currentUsername && mounted) {
-                        setState(() {
-                            _isOtherUserTyping = data['is_typing'] ?? false;
-                        });
-                    }
-                }
-            } catch (_) {}
-        });
     }
 
     @override
@@ -119,6 +102,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
 
         final currentUsername = ref.watch(authProvider).username ?? '';
         final messages = ref.watch(chatMessagesProvider(conversationId));
+        final typingMap = ref.watch(typingProvider);
+        final bool _isOtherUserTyping = typingMap[conversationId] ?? false;
         _scrollToBottom();
 
         return Scaffold(

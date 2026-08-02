@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 
+import 'auth_provider.dart';
+
 final typingProvider = StateProvider<Map<int, bool>>((ref) => {});
 
 class ChatMessage {
@@ -49,12 +51,15 @@ class ChatMessageNotifier extends StateNotifier<List<ChatMessage>> {
         _wsService.sendReadReceipt(conversationId);
         _wsService.messages.listen((raw) {
             final data = jsonDecode(raw as String);
-            if(data['type'] == 'typing_status') {
-                _ref.read(typingProvider.notifier).update((state) {
-                    final updated = Map<int, bool>.from(state);
-                    updated[conversationId] = data['is_typing'] ?? false;
-                    return updated;
-                });
+            if (data['type'] == 'typing_status') {
+                final currentUsername = _ref.read(authProvider).username;
+                if (data['username'] != currentUsername) {
+                    _ref.read(typingProvider.notifier).update((state) {
+                        final updated = Map<int, bool>.from(state);
+                        updated[conversationId] = data['is_typing'] ?? false;
+                        return updated;
+                    });
+                }
                 return;
             }
             if(data['type'] == 'message_read') {
