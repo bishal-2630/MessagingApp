@@ -86,7 +86,7 @@ class MessageScreen extends ConsumerWidget {
                                             isRead ? Icons.done_all
                                             : isDelivered ? Icons.done : Icons.done,
                                             size: 14,
-                                            color: isRead ? Colors.blue : Colors.white70,
+                                            color: isRead ? const Color(0xFF34B7F1) : Colors.white70,
                                         ),
                                         const SizedBox(width: 4),
                                     ],

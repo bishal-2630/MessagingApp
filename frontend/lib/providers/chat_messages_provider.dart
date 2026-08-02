@@ -50,8 +50,8 @@ class ChatMessageNotifier extends StateNotifier<List<ChatMessage>> {
         try {
             final history = await ApiService.getMessages(conversationId);
             final messageList = history.map((m) => ChatMessage.fromJson(m)).toList();
-            _isInititalized = true;
-          
+            state = messageList;
+            _isInitialized = true;
         } catch (e) {
             if (!_isInitialized && state.isEmpty) {
                 state = [

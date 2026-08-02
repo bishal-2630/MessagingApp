@@ -211,8 +211,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                                             : msg.isDelivered 
                                                 ? Icons.done_all 
                                                 : Icons.done,
-                                        size: 12,
-                                        color: msg.isRead ? Colors.green : Colors.white60,
+                                        size: 16,
+                                        color: msg.isRead ? const Color(0xFF34B7F1) : Colors.white70,
                                     ),
                                 ],
                             ],
