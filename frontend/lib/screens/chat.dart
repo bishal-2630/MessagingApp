@@ -4,6 +4,7 @@ import '../providers/conversations_provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 class ChatScreen extends ConsumerStatefulWidget {
     const ChatScreen({super.key});
@@ -18,6 +19,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     bool _isOnline = false;
     String _lastSeenText = '';
     bool _hasFetchedStatus = false;
+    bool _isOtherUserTyping = false;
+    Timer? _typingTimer;
 
     @override
     void initState() {

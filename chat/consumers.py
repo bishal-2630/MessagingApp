@@ -38,6 +38,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         try:
             data = json.loads(text_data)
+            if data.get('type') == 'typing':
+                is_typing = data.get('is_typing', False)
+                user = self.scope.get('user')
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                       'type': 'typing_status',
+                       'user_id': user.id,
+                       'username': user.username,
+                       'is_typing': is_typing,
+                    }
+                )
+                return 
             content = data.get('content', '').strip()
             if not content:
                 return
@@ -62,6 +75,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({'error': str(e)}))
     
     async def chat_message(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    async def typing_status(self, event):
         await self.send(text_data=json.dumps(event))
 
     @database_sync_to_async

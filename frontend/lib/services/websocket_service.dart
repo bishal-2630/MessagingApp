@@ -30,6 +30,10 @@ class WebSocketService {
         _chatChannel?.sink.add('{"content": "$content"}');
     }
 
+    void sendTypingStatus(bool isTyping) {
+        _chatChannel?.sink.add('{"type": "typing", "is_typing": $isTyping}');
+    }
+
     void disconnect() {
         _chatChannel?.sink.close();
         _chatChannel = null;
