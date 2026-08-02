@@ -42,10 +42,27 @@ class ChatMessageNotifier extends StateNotifier<List<ChatMessage>> {
 
     Future<void> init(int conversationId) async {
         await _wsService.connect(conversationId);
+        _wsService.sendReadReceipt(conversationId);
         _wsService.messages.listen((raw) {
             final data = jsonDecode(raw as String);
-            final newMessage = ChatMessage.fromJson(data);
-            state = [...state, newMessage];
+            if(data['type'] == 'message_read') {
+                state = state.map((msg) => 
+                ChatMessage(
+                    id: msg.id,
+                    sender: msg.sender,
+                    senderUsername: msg.senderUsername,
+                    content: msg.content,
+                    isDelivered: true,
+                    isRead: true,
+                    createdAt: msg.createdAt,
+                )).toList();
+                return;
+            }
+            if (data['type'] == 'chat_message') {
+                final newMessage = ChatMessage.fromJson(data);
+                state = [...state, newMessage];
+                _wsService.sendReadReceipt(conversationId);
+            }
         });
         try {
             final history = await ApiService.getMessages(conversationId);

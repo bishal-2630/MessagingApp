@@ -51,6 +51,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     }
                 )
                 return 
+            
+            if data.get('type') == 'read_receipt':
+                user = self.scope.get('user')
+                await self.mark_messages_as_read(user, self.conversation_id)
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'message_read',
+                        'reader_id': user.id,
+                    }
+                )
+                return
+            
             content = data.get('content', '').strip()
             if not content:
                 return
@@ -73,6 +86,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.notify_other_participants(user,self.conversation_id, content)
         except Exception as e:
             await self.send(text_data=json.dumps({'error': str(e)}))
+
+    async def message_read(self, event):
+        await self.send(text_data=json.dumps(event))
+
     
     async def chat_message(self, event):
         await self.send(text_data=json.dumps(event))
@@ -97,7 +114,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             content=content,
             is_delivered=True,
         )
-
+    @database_sync_to_async
+    def mark_messages_read(self, user, conversation_id):
+        Message.objects.filter(
+            conversation_id=conversation_id,
+            is_read=False
+        ).exclude(sender=user).update(is_read=True, is_delivered=True)
 
     @database_sync_to_async
     def notify_other_participants(self, sender, conversation_id, content):

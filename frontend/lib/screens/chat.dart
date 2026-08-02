@@ -1,10 +1,13 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:math' as math;
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
 import '../providers/chat_messages_provider.dart';
 import '../providers/conversations_provider.dart';
-import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
-import 'package:flutter/material.dart';
-import 'dart:async';
+import '../services/websocket_service.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
     const ChatScreen({super.key});
@@ -26,12 +29,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     void initState() {
         super.initState();
         WidgetsBinding.instance.addObserver(this);
+
+        // Listen for typing events from the other user
+        final wsService = WebSocketService();
+        wsService.messages.listen((raw) {
+            try {
+                final data = jsonDecode(raw as String);
+                if (data['type'] == 'typing_status') {
+                    final currentUsername = ref.read(authProvider).username;
+                    if (data['username'] != currentUsername && mounted) {
+                        setState(() {
+                            _isOtherUserTyping = data['is_typing'] ?? false;
+                        });
+                    }
+                }
+            } catch (_) {}
+        });
     }
 
     @override
     void dispose() {
         WidgetsBinding.instance.removeObserver(this);
         _messageController.dispose();
+        _typingTimer?.cancel();
         ref.invalidate(conversationsProvider);
         super.dispose();
     }
@@ -120,7 +140,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                                 Text(username, style: const TextStyle(fontSize: 16)),
-                                if (!_isOnline && _lastSeenText.isNotEmpty)
+                                if (_isOtherUserTyping)
+                                    const Text(
+                                        'typing...',
+                                        style: TextStyle(
+                                            fontSize: 12, 
+                                            color: Color(0xFF34B7F1), 
+                                            fontStyle: FontStyle.italic,
+                                        ),
+                                    )
+                                else if (!_isOnline && _lastSeenText.isNotEmpty)
                                     Text(
                                         _lastSeenText,
                                         style: const TextStyle(fontSize: 11, color: Colors.white60),
@@ -135,14 +164,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                     // 1. Messages List
                     Expanded(
                         child: ListView.builder(
-                                    padding: const EdgeInsets.all(16.0),
-                                    itemCount: messages.length,
-                                    itemBuilder: (context, index) {
-                                        final msg = messages[index];
-                                        final isMe = msg.senderUsername == currentUsername;
-                                        return _buildBubble(msg, isMe);
-                                    },
-                                ),
+                            padding: const EdgeInsets.all(16.0),
+                            itemCount: messages.length + (_isOtherUserTyping ? 1 : 0),
+                            itemBuilder: (context, index) {
+                                if (index == messages.length) {
+                                    return const TypingBubble();
+                                }
+                                final msg = messages[index];
+                                final isMe = msg.senderUsername == currentUsername;
+                                return _buildBubble(msg, isMe);
+                            },
+                        ),
                     ),
                     
                     // 2. Input Bar
@@ -157,6 +189,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                                             hintText: 'Type a message...',
                                             border: OutlineInputBorder(),
                                         ),
+                                        onChanged: (text) {
+                                            final wsService = WebSocketService();
+                                            if (text.isNotEmpty) {
+                                                wsService.sendTypingStatus(true);
+                                            }
+                                            _typingTimer?.cancel();
+                                            _typingTimer = Timer(const Duration(seconds: 2), () {
+                                                wsService.sendTypingStatus(false);
+                                            });
+                                        },
                                     ),
                                 ),
                                 const SizedBox(width: 8.0),
@@ -216,12 +258,82 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                                                 ? Icons.done_all 
                                                 : Icons.done,
                                         size: 16,
-                                        color: msg.isRead ? const Color(0xFF34B7F1) : Colors.white70,
+                                        color: msg.isRead 
+                                            ? const Color(0xFF34B7F1) 
+                                            : Colors.white70,
                                     ),
                                 ],
                             ],
                         ),
                     ],
+                ),
+            ),
+        );
+    }
+}
+
+class TypingBubble extends StatefulWidget {
+    const TypingBubble({super.key});
+
+    @override
+    State<TypingBubble> createState() => _TypingBubbleState();
+}
+
+class _TypingBubbleState extends State<TypingBubble> with SingleTickerProviderStateMixin {
+    late AnimationController _controller;
+
+    @override
+    void initState() {
+        super.initState();
+        _controller = AnimationController(
+            vsync: this,
+            duration: const Duration(milliseconds: 1200),
+        )..repeat();
+    }
+
+    @override
+    void dispose() {
+        _controller.dispose();
+        super.dispose();
+    }
+
+    @override
+    Widget build(BuildContext context) {
+        return Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                decoration: BoxDecoration(
+                    color: Colors.grey[800],
+                    borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                        bottomRight: Radius.circular(16),
+                        bottomLeft: Radius.zero,
+                    ),
+                ),
+                child: AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, child) {
+                        return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: List.generate(3, (index) {
+                                final delay = index * 0.2;
+                                final value = (math.sin((_controller.value * 2 * math.pi) - (delay * math.pi)) + 1) / 2;
+                                return Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                                    child: Transform.translate(
+                                        offset: Offset(0, -4 * value),
+                                        child: CircleAvatar(
+                                            radius: 3.5,
+                                            backgroundColor: const Color(0xFF34B7F1).withOpacity(0.4 + (0.6 * value)),
+                                        ),
+                                    ),
+                                );
+                            }),
+                        );
+                    },
                 ),
             ),
         );

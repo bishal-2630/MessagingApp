@@ -34,6 +34,11 @@ class WebSocketService {
         _chatChannel?.sink.add('{"type": "typing", "is_typing": $isTyping}');
     }
 
+    void sendReadReceipt(int conversationId) {
+        _chatChannel?.sink.add('{"type": "read_receipt", "conversation_id": $conversationId}');
+}
+
+
     void disconnect() {
         _chatChannel?.sink.close();
         _chatChannel = null;
