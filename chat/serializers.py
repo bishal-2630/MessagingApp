@@ -6,7 +6,7 @@ class MessageSerializer(serializers.ModelSerializer):
     sender_username = serializers.ReadOnlyField(source='sender.username')
     class Meta:
         model = Message
-        fields = ['id','conversation','sender','sender_username','content','created_at']
+        fields = ['id','conversation','sender','sender_username','content','is_delivered', 'is_read', 'created_at']
         extra_kwargs = {
             'sender' : {'read_only':True}
         }
