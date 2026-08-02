@@ -50,6 +50,9 @@ class MessageScreen extends ConsumerWidget {
                             final displayName = otherParticipants.isNotEmpty ? otherParticipants : 'You';
                             final lastMsg = chat['last_message'];
                             final lastMsgText = lastMsg != null && lastMsg['content'] != null ? lastMsg['content'] as String: 'No messages yet';
+                            final bool isMyLastMsg = lastMsg != null && lastMsg['sender_username'] == currentUsername;
+                            final bool isDelivered = lastMsg != null && (lastMsg['is_delivered'] ?? false);
+                            final bool isRead = lastMsg != null && (lastMsg['is_read'] ?? false);
                             
                             return ListTile(
                                 leading: Stack(
@@ -76,14 +79,30 @@ class MessageScreen extends ConsumerWidget {
                                     ],
                                 ),
                                 title: Text(displayName),
-                                subtitle: Text(
-                                    lastMsgText,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(color: Colors.white70),
+                                subtitle: Row(
+                                    children: [
+                                    if (isMyLastMsg) ...[
+                                        Icon(
+                                            isRead ? Icons.done_all
+                                            : isDelivered ? Icons.done : Icons.done,
+                                            size: 14,
+                                            color: isRead ? Colors.blue : Colors.white70,
+                                        ),
+                                        const SizedBox(width: 4),
+                                    ],
+                                    Expanded(
+                                        child: Text(
+                                            lastMsgText,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(color: Colors.white70),
+                                        ),
+                                    ),
+                                    ],
                                 ),
-                                onTap: () {
-                                    Navigator.pushNamed(context, '/chat', arguments: 
+                                
+                                onTap: () async {
+                                    await Navigator.pushNamed(context, '/chat', arguments: 
                                     {
                                         'conversationId': chat['id'],
                                         'username': displayName,
@@ -92,6 +111,7 @@ class MessageScreen extends ConsumerWidget {
                                                 (p) => p['username'] != currentUsername,
                                                 orElse: () => {},
                                             )['id'],
+                                    ref.invalidate(conversationsProvider);
                                     });
                                 },
                             );

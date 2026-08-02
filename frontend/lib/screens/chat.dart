@@ -28,6 +28,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
     void dispose() {
         WidgetsBinding.instance.removeObserver(this);
         _messageController.dispose();
+        ref.invalidate(conversationsProvider);
         super.dispose();
     }
 
@@ -129,9 +130,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                 children: [
                     // 1. Messages List
                     Expanded(
-                        child: messages.isEmpty
-                                ? const Center(child: Text('No messages yet. Say hello!'))
-                                : ListView.builder(
+                        child: ListView.builder(
                                     padding: const EdgeInsets.all(16.0),
                                     itemCount: messages.length,
                                     itemBuilder: (context, index) {
