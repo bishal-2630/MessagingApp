@@ -145,6 +145,7 @@ class ForgotPasswordView(APIView):
         
         try:
             resend_api_key = os.getenv('RESEND_API_KEY')
+            print(f"[DEBUG] RESEND_API_KEY present: {bool(resend_api_key)}")
             if resend_api_key:
                 resp = requests.post(
                     'https://api.resend.com/emails',
@@ -160,6 +161,7 @@ class ForgotPasswordView(APIView):
                     },
                     timeout=10,
                 )
+                print(f"[DEBUG] Resend status={resp.status_code} body={resp.text}")
                 if resp.status_code >= 400:
                     return Response({'error': f'Resend error ({resp.status_code}): {resp.text}'}, status=status.HTTP_400_BAD_REQUEST)
             else:
