@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../providers/chat_messages_provider.dart';
 import '../providers/conversations_provider.dart';
+import '../services/notification_service.dart';
 import '../services/api_service.dart';
 import '../services/websocket_service.dart';
 
@@ -33,6 +34,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
 
     @override
     void dispose() {
+        NotificationService.activeConversationId = null;
         WidgetsBinding.instance.removeObserver(this);
         _messageController.dispose();
         _scrollController.dispose();
@@ -93,6 +95,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
             conversationId = rawArgs['conversationId'];
             username = rawArgs['username'] ?? 'Chat';
             _conversationId = conversationId;
+
+            NotificationService.activeConversationId = conversationId;
             
             if (rawArgs['targetUserId'] != null && !_hasFetchedStatus) {
                 _hasFetchedStatus = true;
