@@ -171,7 +171,10 @@ class ForgotPasswordView(APIView):
                     fail_silently=False,
                 )
         except Exception as e:
-            return Response({'error': f'Failed to send email: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {'error': f'Could not send email: {str(e)}. Please set RESEND_API_KEY in Hugging Face secrets.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         return Response({'message': 'OTP has been sent to your email.'})
 
