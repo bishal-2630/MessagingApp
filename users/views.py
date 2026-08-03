@@ -116,7 +116,6 @@ from django.conf import settings
 from .models import PasswordResetOTP
 
 class ForgotPasswordView(APIView):
-    """Step 1: User enters email → receive OTP in their inbox."""
     permission_classes = []
 
     def post(self, request):
@@ -127,20 +126,20 @@ class ForgotPasswordView(APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            # Don't reveal if the email exists (security best practice)
-            return Response({'message': 'If this email exists, an OTP has been sent.'})
+            
+            return Response({'error': 'No account found with this email.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Delete any old unused OTPs for this user
+        
         PasswordResetOTP.objects.filter(user=user, is_used=False).delete()
 
-        # Generate a random 6-digit OTP
+        
         otp_code = str(random.randint(100000, 999999))
         PasswordResetOTP.objects.create(user=user, otp=otp_code)
 
-        # Send email
+        
         send_mail(
             subject='Your Password Reset OTP - ChatMe',
-            message=f'Your OTP code is: {otp_code}\n\nThis code expires in 10 minutes.\nDo not share this code with anyone.',
+            message=f'Your OTP code is: {otp_code}\n\nThis code expires in 5 minutes.\nDo not share this code with anyone.',
             from_email=settings.EMAIL_HOST_USER,
             recipient_list=[email],
             fail_silently=False,
@@ -150,7 +149,6 @@ class ForgotPasswordView(APIView):
 
 
 class VerifyOTPView(APIView):
-    """Step 2: User enters OTP → get back a short-lived reset_token."""
     permission_classes = []
 
     def post(self, request):
@@ -175,7 +173,7 @@ class VerifyOTPView(APIView):
         if otp_obj.is_expired():
             return Response({'error': 'OTP has expired. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Generate a secure reset token and attach it to this OTP record
+        
         reset_token = secrets.token_hex(32)
         otp_obj.reset_token = reset_token
         otp_obj.save()
@@ -184,7 +182,6 @@ class VerifyOTPView(APIView):
 
 
 class ResetPasswordView(APIView):
-    """Step 3: User enters new password using their reset_token."""
     permission_classes = []
 
     def post(self, request):
@@ -207,7 +204,7 @@ class ResetPasswordView(APIView):
         if otp_obj.is_expired():
             return Response({'error': 'Reset link has expired. Please start over.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Set the new password and invalidate the OTP
+        
         user = otp_obj.user
         user.set_password(new_password)
         user.save()

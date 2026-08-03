@@ -20,7 +20,10 @@ class ApiService {
                 final path = error.requestOptions.path;
                 if (path.contains('login') || 
                     path.contains('register') || 
-                    path.contains('token/refresh')) {
+                    path.contains('token/refresh') ||
+                    path.contains('forgot-password') ||
+                    path.contains('verify-otp') ||
+                    path.contains('reset-password')) {
                     return handler.next(error);
                 }
 
@@ -125,6 +128,29 @@ static Future<Map<String, dynamic>> getOrCreateConversation(int targetUserId) as
     static Future<Map<String, dynamic>> getUserStatus(int userId) async {
         final response = await _dio.get('users/$userId/status/');
         return response.data;
-    }   
+    }
 
+    static Future<Map<String, dynamic>> forgotPassword(String email) async {
+        final response = await _dio.post('users/forgot-password/', data: {'email': email});
+        return response.data;
+    }
+
+    static Future<Map<String, dynamic>> verifyOtp({
+        required String email,
+        required String otp,
+    }) async {
+        final response = await _dio.post('users/verify-otp/', data: {'email': email, 'otp': otp});
+        return response.data;
+    }
+
+    static Future<Map<String, dynamic>> resetPassword({
+        required String resetToken,
+        required String newPassword,
+    }) async {
+        final response = await _dio.post('users/reset-password/', data: {
+            'reset_token': resetToken,
+            'new_password': newPassword,
+        });
+        return response.data;
+    }
 }
