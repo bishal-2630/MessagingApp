@@ -107,3 +107,112 @@ class UserStatusView(APIView):
             return Response({'is_online': False, 'last_seen': last_seen})
         except Exception:
             return Response({'is_online': False, 'last_seen': ''})
+
+
+import random
+import secrets
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import PasswordResetOTP
+
+class ForgotPasswordView(APIView):
+    """Step 1: User enters email → receive OTP in their inbox."""
+    permission_classes = []
+
+    def post(self, request):
+        email = request.data.get('email', '').strip().lower()
+        if not email:
+            return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # Don't reveal if the email exists (security best practice)
+            return Response({'message': 'If this email exists, an OTP has been sent.'})
+
+        # Delete any old unused OTPs for this user
+        PasswordResetOTP.objects.filter(user=user, is_used=False).delete()
+
+        # Generate a random 6-digit OTP
+        otp_code = str(random.randint(100000, 999999))
+        PasswordResetOTP.objects.create(user=user, otp=otp_code)
+
+        # Send email
+        send_mail(
+            subject='Your Password Reset OTP - ChatMe',
+            message=f'Your OTP code is: {otp_code}\n\nThis code expires in 10 minutes.\nDo not share this code with anyone.',
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+
+        return Response({'message': 'If this email exists, an OTP has been sent.'})
+
+
+class VerifyOTPView(APIView):
+    """Step 2: User enters OTP → get back a short-lived reset_token."""
+    permission_classes = []
+
+    def post(self, request):
+        email = request.data.get('email', '').strip().lower()
+        otp_code = request.data.get('otp', '').strip()
+
+        if not email or not otp_code:
+            return Response({'error': 'Email and OTP are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        otp_obj = PasswordResetOTP.objects.filter(
+            user=user, otp=otp_code, is_used=False
+        ).order_by('-created_at').first()
+
+        if not otp_obj:
+            return Response({'error': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if otp_obj.is_expired():
+            return Response({'error': 'OTP has expired. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Generate a secure reset token and attach it to this OTP record
+        reset_token = secrets.token_hex(32)
+        otp_obj.reset_token = reset_token
+        otp_obj.save()
+
+        return Response({'reset_token': reset_token})
+
+
+class ResetPasswordView(APIView):
+    """Step 3: User enters new password using their reset_token."""
+    permission_classes = []
+
+    def post(self, request):
+        reset_token = request.data.get('reset_token', '').strip()
+        new_password = request.data.get('new_password', '').strip()
+
+        if not reset_token or not new_password:
+            return Response({'error': 'Reset token and new password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(new_password) < 8:
+            return Response({'error': 'Password must be at least 8 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        otp_obj = PasswordResetOTP.objects.filter(
+            reset_token=reset_token, is_used=False
+        ).first()
+
+        if not otp_obj:
+            return Response({'error': 'Invalid or expired reset link.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if otp_obj.is_expired():
+            return Response({'error': 'Reset link has expired. Please start over.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Set the new password and invalidate the OTP
+        user = otp_obj.user
+        user.set_password(new_password)
+        user.save()
+
+        otp_obj.is_used = True
+        otp_obj.save()
+
+        return Response({'message': 'Password reset successfully. You can now log in.'})
