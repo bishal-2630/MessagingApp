@@ -141,18 +141,38 @@ class ForgotPasswordView(APIView):
         PasswordResetOTP.objects.create(user=user, otp=otp_code)
 
         
+        import requests
         try:
-            send_mail(
-                subject='Your Password Reset OTP - ChatMe',
-                message=f'Your OTP code is: {otp_code}\n\nThis code expires in 5 minutes.\nDo not share this code with anyone.',
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[email],
-                fail_silently=False,
-            )
+            resend_api_key = os.getenv('RESEND_API_KEY')
+            if resend_api_key:
+                resp = requests.post(
+                    'https://api.resend.com/emails',
+                    headers={
+                        'Authorization': f'Bearer {resend_api_key}',
+                        'Content-Type': 'application/json',
+                    },
+                    json={
+                        'from': 'ChatMe <onboarding@resend.dev>',
+                        'to': [email],
+                        'subject': 'Your Password Reset OTP - ChatMe',
+                        'html': f'<p>Your OTP code is: <strong style="font-size: 20px;">{otp_code}</strong></p><p>This code expires in 5 minutes.</p>',
+                    },
+                    timeout=10,
+                )
+                if resp.status_code >= 400:
+                    raise Exception(f"Resend error: {resp.text}")
+            else:
+                send_mail(
+                    subject='Your Password Reset OTP - ChatMe',
+                    message=f'Your OTP code is: {otp_code}\n\nThis code expires in 5 minutes.\nDo not share this code with anyone.',
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
         except Exception as e:
-            print(f"[OTP LOG] Could not send email via SMTP ({e}). OTP for {email} is: {otp_code}")
+            return Response({'error': f'Failed to send email: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response({'message': 'If this email exists, an OTP has been sent.'})
+        return Response({'message': 'OTP has been sent to your email.'})
 
 
 class VerifyOTPView(APIView):
