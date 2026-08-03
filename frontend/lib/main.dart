@@ -13,6 +13,9 @@ import 'services/auth_service.dart';
 import 'services/api_service.dart';
 import 'screens/search_user.dart';
 import 'screens/chat.dart';
+import 'screens/forgot_password.dart';
+import 'screens/verify_otp.dart';
+import 'screens/reset_password.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -91,6 +94,9 @@ class MyApp extends ConsumerWidget {
         '/messages': (context) => const MessageScreen(),
         '/search': (context) => const SearchUserScreen(),
         '/chat': (context) => const ChatScreen(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
+        '/verify-otp': (context) => const VerifyOtpScreen(),
+        '/reset-password': (context) => const ResetPasswordScreen(),
       },
     );
   }

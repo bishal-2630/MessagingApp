@@ -87,8 +87,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>{
                                       ),
                                   ),
                               ),
-
-                              const SizedBox(height: 24.0),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: () {
+                                    Navigator.pushNamed(context, '/forgot-password');
+                                  },
+                                  child: const Text('Forgot Password?'),
+                                ),
+                              ),
+                              const SizedBox(height: 12.0),
                               ElevatedButton(
                                   onPressed: () async {
                                     try {
