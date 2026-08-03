@@ -63,7 +63,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                         const Icon(Icons.mark_email_read, size: 72, color: Color(0xFF34B7F1)),
                         const SizedBox(height: 16),

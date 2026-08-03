@@ -61,7 +61,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                         const Icon(Icons.lock_reset, size: 72, color: Color(0xFF34B7F1)),
                         const SizedBox(height: 16),
