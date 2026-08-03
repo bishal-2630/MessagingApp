@@ -137,13 +137,16 @@ class ForgotPasswordView(APIView):
         PasswordResetOTP.objects.create(user=user, otp=otp_code)
 
         
-        send_mail(
-            subject='Your Password Reset OTP - ChatMe',
-            message=f'Your OTP code is: {otp_code}\n\nThis code expires in 5 minutes.\nDo not share this code with anyone.',
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[email],
-            fail_silently=False,
-        )
+        try:
+            send_mail(
+                subject='Your Password Reset OTP - ChatMe',
+                message=f'Your OTP code is: {otp_code}\n\nThis code expires in 5 minutes.\nDo not share this code with anyone.',
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            print(f"[OTP LOG] Could not send email via SMTP ({e}). OTP for {email} is: {otp_code}")
 
         return Response({'message': 'If this email exists, an OTP has been sent.'})
 
