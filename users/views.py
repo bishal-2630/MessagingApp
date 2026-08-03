@@ -161,7 +161,7 @@ class ForgotPasswordView(APIView):
                     timeout=10,
                 )
                 if resp.status_code >= 400:
-                    raise Exception(f"Resend error: {resp.text}")
+                    return Response({'error': f'Resend error ({resp.status_code}): {resp.text}'}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 send_mail(
                     subject='Your Password Reset OTP - ChatMe',
@@ -172,7 +172,7 @@ class ForgotPasswordView(APIView):
                 )
         except Exception as e:
             return Response(
-                {'error': f'Could not send email: {str(e)}. Please set RESEND_API_KEY in Hugging Face secrets.'},
+                {'error': f'Could not send email: {str(e)}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
