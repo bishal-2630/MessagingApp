@@ -1,3 +1,4 @@
+from rest_framework.decorators import authentication_classes
 from .models import User 
 from chat.models import FCMDeviceToken
 from functools import partial
@@ -10,8 +11,10 @@ from .serializers import UserSerializer
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from django.utils import timezone
+from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
+
 
 
 class RegisterView(APIView):
@@ -117,6 +120,7 @@ from .models import PasswordResetOTP
 
 class ForgotPasswordView(APIView):
     permission_classes = []
+    authentication_classes = []
 
     def post(self, request):
         email = request.data.get('email', '').strip().lower()
