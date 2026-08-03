@@ -21,7 +21,10 @@ urlpatterns = [
     path('users/search/', UserSearchView.as_view(), name='user_search'),
     path('fcm/token/', RegisterFCMTokenView.as_view(), name='register_fcm_token'),
     path('users/<int:user_id>/status/', views.UserStatusView.as_view(), name='user_status'),
-    path('forgot-password/', ForgotPasswordView.as_view(), name='forgot_password'),
-    path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
-    path('reset-password/', ResetPasswordView.as_view(), name='reset_password'),
+    path('users/forgot-password/', ForgotPasswordView.as_view(), name='forgot_password'),
+    path('users/verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
+    path('users/reset-password/', ResetPasswordView.as_view(), name='reset_password'),
+    path('forgot-password/', ForgotPasswordView.as_view(), name='forgot_password_alias'),
+    path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp_alias'),
+    path('reset-password/', ResetPasswordView.as_view(), name='reset_password_alias'),
 ] + router.urls
