@@ -1,4 +1,5 @@
 import os
+import requests
 from rest_framework.decorators import authentication_classes
 from .models import User 
 from chat.models import FCMDeviceToken
@@ -142,7 +143,6 @@ class ForgotPasswordView(APIView):
         PasswordResetOTP.objects.create(user=user, otp=otp_code)
 
         
-        import requests
         try:
             resend_api_key = os.getenv('RESEND_API_KEY')
             if resend_api_key:
