@@ -138,11 +138,14 @@ class ForgotPasswordView(APIView):
         
         PasswordResetOTP.objects.filter(user=user, is_used=False).delete()
 
-        
-        otp_code = str(random.randint(100000, 999999))
-        PasswordResetOTP.objects.create(user=user, otp=otp_code)
+        try:
+            otp_code = str(random.randint(100000, 999999))
+            PasswordResetOTP.objects.create(user=user, otp=otp_code)
+            print(f"[DEBUG] OTP created successfully for {email}")
+        except Exception as db_err:
+            print(f"[DEBUG] DB error creating OTP: {db_err}")
+            return Response({'error': f'DB error: {db_err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        
         try:
             resend_api_key = os.getenv('RESEND_API_KEY')
             print(f"[DEBUG] RESEND_API_KEY present: {bool(resend_api_key)}")
