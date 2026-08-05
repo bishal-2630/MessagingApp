@@ -147,35 +147,15 @@ class ForgotPasswordView(APIView):
             return Response({'error': f'DB error: {db_err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
-            resend_api_key = os.getenv('RESEND_API_KEY')
-            print(f"[DEBUG] RESEND_API_KEY present: {bool(resend_api_key)}")
-            if resend_api_key:
-                resp = requests.post(
-                    'https://api.resend.com/emails',
-                    headers={
-                        'Authorization': f'Bearer {resend_api_key}',
-                        'Content-Type': 'application/json',
-                    },
-                    json={
-                        'from': 'ChatMe <onboarding@resend.dev>',
-                        'to': [email],
-                        'subject': 'Your Password Reset OTP - ChatMe',
-                        'html': f'<p>Your OTP code is: <strong style="font-size: 20px;">{otp_code}</strong></p><p>This code expires in 5 minutes.</p>',
-                    },
-                    timeout=10,
-                )
-                print(f"[DEBUG] Resend status={resp.status_code} body={resp.text}")
-                if resp.status_code >= 400:
-                    return Response({'error': f'Resend error ({resp.status_code}): {resp.text}'}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                send_mail(
-                    subject='Your Password Reset OTP - ChatMe',
-                    message=f'Your OTP code is: {otp_code}\n\nThis code expires in 5 minutes.\nDo not share this code with anyone.',
-                    from_email=settings.EMAIL_HOST_USER,
-                    recipient_list=[email],
-                    fail_silently=False,
-                )
+            send_mail(
+                subject='Your Password Reset OTP - ChatMe',
+                message=f'Your OTP code is: {otp_code}\n\nThis code expires in 5 minutes.\nDo not share this code with anyone.',
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[email],
+                fail_silently=False,
+            )
         except Exception as e:
+            print(f"[ERROR] send_mail exception: {e}")
             return Response(
                 {'error': f'Could not send email: {str(e)}'},
                 status=status.HTTP_400_BAD_REQUEST
