@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../services/notification_service.dart';
 import '../providers/auth_provider.dart';
 import 'package:flutter/material.dart';
@@ -116,8 +117,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>{
                                       );
 
                                       Navigator.pushReplacementNamed(context, '/messages');
-                                    } catch (e) {
+                                      } catch (e) {
                                       if (!mounted) return;
+                                      if (e is DioException && e.response != null && e.response!.data is Map) {
+                                        final data = e.response!.data as Map;
+                                        if (data['code'] == 'email_not_verified') {
+                                          final unverifiedEmail = data['email'] ?? _emailController.text.trim();
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Please verify your email before logging in.')),
+                                          );
+                                          Navigator.pushNamed(context, '/verify-email', arguments: {'email': unverifiedEmail});
+                                          return;
+                                        }
+                                      }
                                       String errorMessage = 'Login failed';
                                       if (e is DioException && e.response != null) {
                                         errorMessage = e.response!.data.toString();
@@ -130,6 +142,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>{
                                     }
                                   },
                                   child: const Text('Login'),
+                              ),
+                              const SizedBox(height: 12.0),
+                              OutlinedButton.icon(
+                                  onPressed: _handleGoogleSignIn,
+                                  icon: const Icon(Icons.g_mobiledata, size: 28),
+                                  label: const Text('Sign in with Google'),
                               ),
                               const SizedBox(height: 16.0),
                               Row(
@@ -153,6 +171,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen>{
           )
         );
   }
-}
-  
 
+  Future<void> _handleGoogleSignIn() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+      final GoogleSignInAccount? account = await googleSignIn.signIn();
+      if (account == null) return;
+
+      final GoogleSignInAuthentication auth = await account.authentication;
+      final idToken = auth.idToken;
+
+      if (idToken == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to get Google ID token.')),
+        );
+        return;
+      }
+
+      final response = await ApiService.googleLogin(idToken: idToken);
+      await ref.read(authProvider.notifier).login(
+        access: response['access'],
+        refresh: response['refresh'],
+        username: response['username'],
+      );
+      await NotificationService.init();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Google Sign-In successful!')),
+      );
+      Navigator.pushReplacementNamed(context, '/messages');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Google Sign-In failed: ${e.toString()}')),
+      );
+    }
+  }
+}

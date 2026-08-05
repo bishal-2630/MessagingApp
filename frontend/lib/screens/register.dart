@@ -1,3 +1,8 @@
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
+import '../services/notification_service.dart';
+import '../services/auth_service.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'package:dio/dio.dart';
@@ -74,17 +79,21 @@ class _RegisterScreenState extends State<RegisterScreen>{
                                     ElevatedButton(
                                         onPressed: () async {
                                             try {
+                                                final email = _emailController.text.trim();
                                                 await ApiService.register(
                                                     username: _usernameController.text,
                                                     email: _emailController.text,
                                                     password: _passwordController.text,
                                                 );
                                             if (!mounted) return;
-
                                             ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text('Registration Successful'))
+                                                const SnackBar(content: Text('Account Created!. Please check your email for verification code.'))
                                             );
-                                            Navigator.pop(context); 
+                                            Navigator.pushReplacementNamed(
+                                                context,
+                                                '/verify-email',
+                                                arguments: {'email': email},
+                                            );
                                             }
                                             catch (e)
                                             {
@@ -102,6 +111,12 @@ class _RegisterScreenState extends State<RegisterScreen>{
                                         },
                                         child: const Text('Register'),
                                     ),
+                                    const SizedBox(height: 16.0),
+                                    OutlinedButton.icon(
+                                        onPressed: _handleGoogleSignIn,
+                                        icon: const Icon(Icons.g_mobiledata, size: 28),
+                                        label: const Text('Sign up with Google'),
+                                    ),
                                     TextButton(
                                         onPressed: () => Navigator.pop(context),
                                         child: const Text('Already have an account? Login'),
@@ -114,4 +129,41 @@ class _RegisterScreenState extends State<RegisterScreen>{
             )
         );
     }
+
+    Future<void> _handleGoogleSignIn() async {
+    try {
+        final GoogleSignIn googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+        final GoogleSignInAccount? account = await googleSignIn.signIn();
+        if (account == null) return;
+
+        final GoogleSignInAuthentication auth = await account.authentication;
+        final idToken = auth.idToken;
+
+        if (idToken == null) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Failed to get Google ID token.')),
+            );
+            return;
+        }
+
+        final response = await ApiService.googleLogin(idToken: idToken);
+        await AuthService.saveTokens(
+            access: response['access'],
+            refresh: response['refresh'],
+        );
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Google Sign-In successful!')),
+        );
+        Navigator.pushReplacementNamed(context, '/messages');
+    } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Google Sign-In failed: ${e.toString()}')),
+        );
+    }
+}
+
 }

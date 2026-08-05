@@ -23,7 +23,10 @@ class ApiService {
                     path.contains('token/refresh') ||
                     path.contains('forgot-password') ||
                     path.contains('verify-otp') ||
-                    path.contains('reset-password')) {
+                    path.contains('reset-password') ||
+                    path.contains('verify-email') ||
+                    path.contains('resend-verification') ||
+                    path.contains('google-login')) {
                     return handler.next(error);
                 }
 
@@ -153,4 +156,35 @@ static Future<Map<String, dynamic>> getOrCreateConversation(int targetUserId) as
         });
         return response.data;
     }
+
+    static Future<Map<String, dynamic>> verifyEmail({
+        required String email,
+        required String otp,
+    }) async {
+        final response = await _dio.post('users/verify-email/', data: {
+            'email': email,
+            'otp': otp,
+        });
+        return response.data;
+    }
+
+    static Future<Map<String, dynamic>> resendVerification({
+        required String email,
+    }) async {
+        final response = await _dio.post('users/resend-verification/', data: {
+            'email': email,
+        });
+        return response.data;
+    }
+
+    static Future<Map<String, dynamic>> googleLogin({
+        required String idToken,
+    }) async {
+        final response = await _dio.post('users/google-login/', data: {
+            'id_token': idToken,
+        });
+        return response.data;
+    }
+    
+
 }

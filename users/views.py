@@ -1,7 +1,8 @@
+from rest_framework.decorators import permission_classes
 import os
 import requests
 from rest_framework.decorators import authentication_classes
-from .models import User 
+from .models import User, EmailVerificationOTP, PasswordResetOTP
 from chat.models import FCMDeviceToken
 from functools import partial
 from users.serializers import ProfileSerializer
@@ -24,8 +25,31 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            user = serializer.save()
+            user.is_email_verified = False
+            user.save()
+
+            otp_code = str(random.randint(100000, 999999))
+            EmailVerificationOTP.objects.create(user=user, otp=otp_code)
+
+            gmail_webhook_url = os.getenv('GMAIL_WEBHOOK_URL')
+            if gmail_webhook_url:
+                try:
+                    requests.post(
+                        gmail_webhook_url,
+                        json={
+                            'to': user.email,
+                            'subject': 'Verify your ChatMe account',
+                            'html': f'<p>Your verification code is: <strong style="font-size: 24px; color: #34B7F1;">{otp_code}</strong></p><p>This code expires in 10 minutes.</p>',
+                        },
+                        timeout=15,
+                    )
+                except Exception as e:
+                    print(f"[ERROR] Verification email failed: {e}")
+            return Response(
+                {'message': 'Account created. Please verify your email.', 'email': user.email},
+                status=status.HTTP_201_CREATED
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
@@ -35,6 +59,9 @@ class LoginView(APIView):
         password = request.data.get('password')
         user = authenticate(request, username=email, password=password)
         if user:
+            if not user.is_email_verified:
+                return Response({'error': 'Email not verified. Please verify your email first.', 'code': 'email_not_verified', 'email': user.email}, status=status.HTTP_403_FORBIDDEN)
+
             refresh = RefreshToken.for_user(user)
             return Response({
                 'refresh': str(refresh),
@@ -265,3 +292,117 @@ class ResetPasswordView(APIView):
         otp_obj.save()
 
         return Response({'message': 'Password reset successfully. You can now log in.'})
+
+
+class VerifyEmailView(APIView):
+    permission_classes = []
+
+    def post(self, request):
+        email = request.data.get('email', '').strip().lower()
+        otp_code = request.data.get('otp', '').strip()
+        if not email or not otp_code:
+            return Response({'error': 'Email and OTP are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error':'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        otp_obj = EmailVerificationOTP.objects.filter(
+            user = user,
+            otp = otp_code,
+            is_used = False,
+        ).order_by('-created_at').first()
+
+        if not otp_obj or otp_obj.is_expired():
+            return Response({'error': 'Invalid or expired OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.is_email_verified = True
+        user.save()
+
+        otp_obj.is_used = True
+        otp_obj.save()
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'message': 'Email verified successfully.',
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user_id': user.id,
+            'username': user.username,
+        })
+
+class ResendVerificationView(APIView):
+    permission_classes = []
+    def post(self, request):
+        email = request.data.get('email', '').strip().lower()
+        if not email:
+            return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'Account not found.'}, status=status.HTTP_400_BAD_REQUEST)
+        if user.is_email_verified:
+            return Response({'message': 'Email is already verified.'}, status=status.HTTP_200_OK)
+        # Delete unused previous verification OTPs
+        EmailVerificationOTP.objects.filter(user=user, is_used=False).delete()
+        otp_code = str(random.randint(100000, 999999))
+        EmailVerificationOTP.objects.create(user=user, otp=otp_code)
+        gmail_webhook_url = os.getenv('GMAIL_WEBHOOK_URL')
+        if gmail_webhook_url:
+            try:
+                requests.post(
+                    gmail_webhook_url,
+                    json={
+                        'to': user.email,
+                        'subject': 'Verify your ChatMe account',
+                        'html': f'<p>Your verification code is: <strong style="font-size: 24px; color: #34B7F1;">{otp_code}</strong></p><p>This code expires in 10 minutes.</p>',
+                    },
+                    timeout=15,
+                )
+            except Exception as e:
+                print(f"[ERROR] Resend verification email failed: {e}")
+        return Response({'message': 'A new verification code has been sent to your email.'})
+
+class GoogleLoginView(APIView):
+    permission_classes = []
+    def post(self, request):
+        id_token_str = request.data.get('id_token')
+        if not id_token_str:
+            return Response({'error': 'ID token is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            resp = requests.get(f"https://www.googleapis.com/oauth2/v3/tokeninfo?id_token={id_token_str}",
+            timeout = 10
+            )
+            if resp.status_code !=200:
+                return Response({'error': 'Invalid Google ID token.'}, status=status.HTTP_400_BAD_REQUEST)
+            token_data = resp.json()
+            email = token_data.get('email', '').strip().lower()
+            name = token_data.get('name') or email.split('@')[0]
+            
+            if not email:
+                return Response({'error':'Email not provided by google.'}, status=status.HTTP_400_BAD_REQUEST)
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={
+                    'username': name,
+                    'is_email_verified': True,
+                }
+            )
+
+            if created:
+                user.set_unusable_password()
+                user.save()
+            elif not user.is_email_verified:
+                user.is_email_verified = True
+                user.save()
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user_id': user.id,
+                'username': user.username,
+            })
+        except Exception as e:
+            return Response({'error': f'Google authentication failed: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            
