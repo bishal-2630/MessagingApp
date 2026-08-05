@@ -146,18 +146,54 @@ class ForgotPasswordView(APIView):
             print(f"[DEBUG] DB error creating OTP: {db_err}")
             return Response({'error': f'DB error: {db_err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        try:
-            send_mail(
-                subject='Your Password Reset OTP - ChatMe',
-                message=f'Your OTP code is: {otp_code}\n\nThis code expires in 5 minutes.\nDo not share this code with anyone.',
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[email],
-                fail_silently=False,
-            )
-        except Exception as e:
-            print(f"[ERROR] send_mail exception: {e}")
+        email_sent = False
+        email_errors = []
+
+        # 1. Try Google Apps Script / Gmail HTTPS Endpoint (Port 443 - Works on Hugging Face)
+        gmail_webhook_url = os.getenv('GMAIL_WEBHOOK_URL')
+        if gmail_webhook_url:
+            try:
+                resp = requests.post(
+                    gmail_webhook_url,
+                    json={
+                        'to': email,
+                        'subject': 'Your Password Reset OTP - ChatMe',
+                        'html': f'<p>Your OTP code is: <strong style="font-size: 24px; color: #34B7F1;">{otp_code}</strong></p><p>This code expires in 5 minutes.</p>',
+                    },
+                    timeout=15,
+                )
+                print(f"[DEBUG] Gmail Webhook status={resp.status_code} body={resp.text}")
+                if resp.status_code == 200 and 'error' not in resp.text.lower():
+                    email_sent = True
+                else:
+                    email_errors.append(f"Gmail Webhook HTTP {resp.status_code}: {resp.text}")
+            except Exception as w_err:
+                print(f"[WARNING] Gmail Webhook exception: {w_err}")
+                email_errors.append(f"Gmail Webhook exception: {str(w_err)}")
+
+        # 2. Try Django SMTP send_mail (Port 587 - Works on local machine)
+        if not email_sent:
+            try:
+                send_mail(
+                    subject='Your Password Reset OTP - ChatMe',
+                    message=f'Your OTP code is: {otp_code}\n\nThis code expires in 5 minutes.\nDo not share this code with anyone.',
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+                email_sent = True
+            except Exception as smtp_err:
+                print(f"[ERROR] send_mail exception: {smtp_err}")
+                email_errors.append(f"SMTP error: {str(smtp_err)}")
+
+        # 3. If email delivery failed, print OTP to logs for testing & return detailed error
+        if not email_sent:
+            print(f"[IMPORTANT] Email not sent. Generated OTP for {email} is: {otp_code}")
+            err_details = " | ".join(email_errors)
             return Response(
-                {'error': f'Could not send email: {str(e)}'},
+                {
+                    'error': f'Could not send email via HTTPS Webhook or SMTP. Details: {err_details}'
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
