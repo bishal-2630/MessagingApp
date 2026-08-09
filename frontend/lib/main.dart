@@ -85,7 +85,7 @@ class MyApp extends ConsumerWidget {
     final themeMode = ref.watch(themeProvider);
     return MaterialApp(
       navigatorKey: navigatorKey,
-      title: 'Chatme',
+      title: 'Chat Me',
       theme: ThemeData.light(),
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
