@@ -47,6 +47,7 @@ class ChatMessageNotifier extends StateNotifier<List<ChatMessage>> {
     ChatMessageNotifier(this._ref, this._conversationId) : super([]);
 
     Future<void> init(int conversationId) async {
+        if (_isInitialized) return;
         await _wsService.connect(conversationId);
         _wsService.sendReadReceipt(conversationId);
         _wsService.messages.listen((raw) {

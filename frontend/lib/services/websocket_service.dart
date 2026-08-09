@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'auth_service.dart';
 
@@ -20,7 +21,10 @@ class WebSocketService {
     Stream<dynamic> get messages => _chatStreamController.stream;
     Stream<dynamic> get userMessages => _userStreamController.stream;
 
+    int? _currentConversationId;
+
     Future<void> connectUser() async {
+        if (_userChannel != null) return;
         final token = await AuthService.getAccessToken();
         final uri = Uri.parse('wss://bishall10-chatme.hf.space/ws/user/?token=$token');
         _userChannel = WebSocketChannel.connect(uri);
@@ -32,7 +36,10 @@ class WebSocketService {
     }
 
     Future<void> connect(int conversationId) async {
-        // Disconnect old channel first if switching conversations
+        if (_currentConversationId == conversationId && _chatChannel != null) {
+            return;
+        }
+        _currentConversationId = conversationId;
         await _chatChannel?.sink.close();
         
         final token = await AuthService.getAccessToken();
@@ -46,20 +53,25 @@ class WebSocketService {
     }
 
     void sendMessage(String content) {
-        _chatChannel?.sink.add('{"content": "$content"}');
+        if (_chatChannel == null) {
+            print('[WebSocketService] Error: _chatChannel is null');
+            return;
+        }
+        _chatChannel?.sink.add(jsonEncode({'content': content}));
     }
 
     void sendTypingStatus(bool isTyping) {
-        _chatChannel?.sink.add('{"type": "typing", "is_typing": $isTyping}');
+        _chatChannel?.sink.add(jsonEncode({'type': 'typing', 'is_typing': isTyping}));
     }
 
     void sendReadReceipt(int conversationId) {
-        _chatChannel?.sink.add('{"type": "read_receipt", "conversation_id": $conversationId}');
+        _chatChannel?.sink.add(jsonEncode({'type': 'read_receipt', 'conversation_id': conversationId}));
     }
 
     void disconnect() {
         _chatChannel?.sink.close();
         _chatChannel = null;
+        _currentConversationId = null;
     }
 
     void disconnectUser() {
