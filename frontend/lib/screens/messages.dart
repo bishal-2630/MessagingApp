@@ -57,6 +57,8 @@ class MessageScreen extends ConsumerWidget {
                             final isSomeoneTyping = typingState[conversationIdInt] ?? false;
                             final bool isDelivered = lastMsg != null && (lastMsg['is_delivered'] ?? false);
                             final bool isRead = lastMsg != null && (lastMsg['is_read'] ?? false);
+                            final int unreadCount = chat['unread_count'] as int? ?? 0;
+                            final bool hasUnread = unreadCount > 0 && !isMyLastMsg;
                             
                             return ListTile(
                                 leading: Stack(
@@ -100,11 +102,36 @@ class MessageScreen extends ConsumerWidget {
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
-                                                color: isSomeoneTyping ? const Color(0xFF34B7F1) : Colors.white70,
+                                                color: isSomeoneTyping ? const Color(0xFF34B7F1) 
+                                                : hasUnread ? Colors.white : Colors.white70,
                                                 fontStyle: isSomeoneTyping ? FontStyle.italic : FontStyle.normal,
+                                                fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
                                             ),
                                         ),
                                     ),
+                                    trailing: (hasUnread)
+                                        ? Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                                color: Color(0xFF25D366),
+                                                shape: BoxShape.circle,
+                                            ),
+                                            constraints: const BoxConstraints(
+                                                minWidth: 20,
+                                                minHeight: 20,
+                                            ),
+                                            child: Text(
+                                                '$unreadCount',
+                                                style: const TextStyle(
+                                                    color: Colors.black,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                            ),
+                                        )
+                                        : null,
+                                    
                                     ],
                                 ),
                                 

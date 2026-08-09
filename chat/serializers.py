@@ -14,12 +14,19 @@ class MessageSerializer(serializers.ModelSerializer):
 class ConversationSerializer(serializers.ModelSerializer):
     participants = UserSerializer(many=True, read_only=True)
     last_message = serializers.SerializerMethodField()
+    unread_count = serializers.SerializerMethodField()
     
     
     def get_last_message(self, obj):
         last_msg = obj.messages.order_by('-created_at').first()
         return MessageSerializer(last_msg).data if last_msg else None
+    
+    def get_unread_count(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return 0
+        return obj.messages.exclude(sender=request.user).filter(is_read=False).count()
 
     class Meta:
         model = Conversation
-        fields = ['id','participants','last_message','created_at']
+        fields = ['id','participants','last_message', 'unread_count', 'created_at']
