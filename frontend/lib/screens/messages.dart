@@ -88,7 +88,7 @@ class MessageScreen extends ConsumerWidget {
                                     if (isMyLastMsg && !isSomeoneTyping) ...[
                                         Icon(
                                             isRead ? Icons.done_all
-                                            : isDelivered ? Icons.done : Icons.done,
+                                            : isDelivered ? Icons.done_all : Icons.done,
                                             size: 16,
                                             color: isRead ? const Color(0xFF34B7F1) : Colors.white70,
                                         ),

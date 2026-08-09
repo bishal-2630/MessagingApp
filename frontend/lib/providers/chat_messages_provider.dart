@@ -62,23 +62,34 @@ class ChatMessageNotifier extends StateNotifier<List<ChatMessage>> {
                 }
                 return;
             }
-            if(data['type'] == 'message_read') {
-                state = state.map((msg) => 
-                ChatMessage(
-                    id: msg.id,
-                    sender: msg.sender,
-                    senderUsername: msg.senderUsername,
-                    content: msg.content,
-                    isDelivered: true,
-                    isRead: true,
-                    createdAt: msg.createdAt,
-                )).toList();
+            if (data['type'] == 'message_read') {
+                final readerId = data['reader_id'];
+                state = state.map((msg) {
+                    // Only mark as read if the reader is NOT the sender of this message
+                    // (i.e. the recipient has read the sender's message)
+                    if (readerId != null && msg.sender != readerId) {
+                        return ChatMessage(
+                            id: msg.id,
+                            sender: msg.sender,
+                            senderUsername: msg.senderUsername,
+                            content: msg.content,
+                            isDelivered: true,
+                            isRead: true,
+                            createdAt: msg.createdAt,
+                        );
+                    }
+                    return msg;
+                }).toList();
                 return;
             }
             if (data['type'] == 'chat_message') {
                 final newMessage = ChatMessage.fromJson(data);
                 state = [...state, newMessage];
-                _wsService.sendReadReceipt(conversationId);
+                final currentUsername = _ref.read(authProvider).username;
+                // Only send read receipt if the message was sent by the OTHER user
+                if (newMessage.senderUsername != currentUsername) {
+                    _wsService.sendReadReceipt(conversationId);
+                }
             }
         });
         try {
