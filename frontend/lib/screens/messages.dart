@@ -109,31 +109,30 @@ class MessageScreen extends ConsumerWidget {
                                             ),
                                         ),
                                     ),
-                                    trailing: (hasUnread)
-                                        ? Container(
-                                            padding: const EdgeInsets.all(6),
-                                            decoration: BoxDecoration(
-                                                color: Color(0xFF25D366),
-                                                shape: BoxShape.circle,
-                                            ),
-                                            constraints: const BoxConstraints(
-                                                minWidth: 20,
-                                                minHeight: 20,
-                                            ),
-                                            child: Text(
-                                                '$unreadCount',
-                                                style: const TextStyle(
-                                                    color: Colors.black,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.bold,
-                                                ),
-                                                textAlign: TextAlign.center,
-                                            ),
-                                        )
-                                        : null,
-                                    
                                     ],
                                 ),
+                                trailing: hasUnread
+                                    ? Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: const BoxDecoration(
+                                            color: Color(0xFF25D366),
+                                            shape: BoxShape.circle,
+                                        ),
+                                        constraints: const BoxConstraints(
+                                            minWidth: 20,
+                                            minHeight: 20,
+                                        ),
+                                        child: Text(
+                                            '$unreadCount',
+                                            style: const TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                        ),
+                                    )
+                                    : null,
                                 
                                 onTap: () async {
                                     await Navigator.pushNamed(context, '/chat', arguments: 
