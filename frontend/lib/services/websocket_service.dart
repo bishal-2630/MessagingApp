@@ -31,7 +31,13 @@ class WebSocketService {
         // Pipe all incoming events into the broadcast controller
         _userChannel!.stream.listen(
             (data) => _userStreamController.add(data),
-            onError: (e) => _userStreamController.addError(e),
+            onError: (e) {
+                _userStreamController.addError(e);
+                _userChannel = null;
+            },
+            onDone: () {
+                _userChannel = null;
+            },
         );
     }
 
@@ -48,14 +54,21 @@ class WebSocketService {
         // Pipe all incoming events into the broadcast controller
         _chatChannel!.stream.listen(
             (data) => _chatStreamController.add(data),
-            onError: (e) => _chatStreamController.addError(e),
+            onError: (e) {
+                _chatStreamController.addError(e);
+                _chatChannel = null;
+                _currentConversationId = null;
+            },
+            onDone: () {
+                _chatChannel = null;
+                _currentConversationId = null;
+            },
         );
     }
 
-    void sendMessage(String content) {
-        if (_chatChannel == null) {
-            print('[WebSocketService] Error: _chatChannel is null');
-            return;
+    Future<void> sendMessage(String content) async {
+        if (_chatChannel == null && _currentConversationId != null) {
+            await connect(_currentConversationId!);
         }
         _chatChannel?.sink.add(jsonEncode({'content': content}));
     }

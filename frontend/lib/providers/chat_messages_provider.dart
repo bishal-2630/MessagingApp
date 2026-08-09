@@ -115,8 +115,8 @@ class ChatMessageNotifier extends StateNotifier<List<ChatMessage>> {
         }
     }
     
-    void sendMessage(String content) {
-        _wsService.sendMessage(content);
+    Future<void> sendMessage(String content) async {
+        await _wsService.sendMessage(content);
     }
 }
 
