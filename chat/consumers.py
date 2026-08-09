@@ -135,6 +135,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     body=content,
                     data={"conversationId": str(conversation_id)}   
                 )
+                from channels.layers import get_channel_layer
+                channel_layer = get_channel_layer()
+                from asgiref.sync import async_to_sync
+                async_to_sync(channel_layer.group_send)(
+                    f'user_{recipient.id}',
+                    {
+                        'type': 'user_notification',
+                        'conversation_id': int(conversation_id),
+                        'sender_username': sender.username,
+                        'content': content,
+                    }
+                )
         except Exception as e:
             print(f"Error notifying participants {e}")
             
@@ -164,6 +176,9 @@ class UserConsumer(AsyncWebsocketConsumer):
             )
 
             await self.set_online_status(user, False)
+
+    async def user_notification(self, event):
+        await self.send(text_data=json.dumps(event))
     
     @database_sync_to_async
     def set_online_status(self, user, is_online):
