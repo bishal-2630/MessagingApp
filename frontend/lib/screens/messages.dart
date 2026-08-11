@@ -12,17 +12,28 @@ class MessageScreen extends ConsumerWidget {
     @override
     Widget build(BuildContext context, WidgetRef ref) {
         final typingState = ref.watch(typingProvider);
+        final currentUsername = ref.watch(authProvider).username ?? '';
+
         return Scaffold(
             appBar: AppBar(
+                automaticallyImplyLeading: false,
                 title: const Text('Messages'),
                 actions: [
-                    IconButton(
-                        icon: const Icon(Icons.logout),
-                        onPressed: () async {
-                            await ref.read(authProvider.notifier).logout();
-                            if (!context.mounted) return;
-                            Navigator.pushReplacementNamed(context, '/');
-                        },
+                    Padding(
+                        padding: const EdgeInsets.only(right: 16.0),
+                        child: GestureDetector(
+                            onTap: () async {
+                                await ref.read(authProvider.notifier).logout();
+                                if (!context.mounted) return;
+                                Navigator.pushReplacementNamed(context, '/');
+                            },
+                            child: CircleAvatar(
+                                radius: 18,
+                                backgroundColor: Colors.deepPurpleAccent,
+                                child: Text(currentUsername.isNotEmpty ? currentUsername[0].toUpperCase() : 'U',
+                                style: const TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+                            ),
+                        ),
                     ),
                 ],
             ),

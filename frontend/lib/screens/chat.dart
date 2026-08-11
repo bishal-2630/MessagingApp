@@ -190,9 +190,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                                 Expanded(
                                     child: TextField(
                                         controller: _messageController,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: 'Type a message...',
-                                            border: OutlineInputBorder(),
+                                            border: OutlineInputBorder(
+                                                borderRadius: BorderRadius.circular(24),   
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                                borderRadius: BorderRadius.circular(24),   
+                                                borderSide: BorderSide(color: Colors.white24),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                                borderRadius: BorderRadius.circular(24),   
+                                                borderSide: BorderSide(color: Color(0xFF34B7F1)),
+                                            ),
+                                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                         ),
                                         onChanged: (text) {
                                             final wsService = WebSocketService();
