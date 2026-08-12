@@ -79,14 +79,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              '@${username.toLowerCase()}',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDarkMode ? Colors.white54 : Colors.black54,
-              ),
-            ),
             const SizedBox(height: 10),
 
             // 3. Email & Verification Status
@@ -190,6 +182,58 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   await ref.read(authProvider.notifier).logout();
                   if (!context.mounted) return;
                   Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                }
+              },
+            ),
+
+            const SizedBox(height: 8),
+
+            ListTile(
+              leading: const Icon(Icons.delete_forever, color: Colors.red),
+              title: const Text(
+                'Delete Account',
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+              subtitle: const Text(
+                'Permanently delete your account and all data',
+                style: TextStyle(fontSize: 12, color: Colors.red),
+              ),
+              onTap: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Delete Account'),
+                    content: const Text(
+                      'This will permanently delete your account and all your messages. This action CANNOT be undone.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  try {
+                    await ApiService.deleteAccount();
+                    await ref.read(authProvider.notifier).logout();
+                    if (!context.mounted) return;
+                    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to delete account. Please try again.')),
+                    );
+                  }
                 }
               },
             ),

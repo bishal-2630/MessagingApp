@@ -190,4 +190,8 @@ static Future<Map<String, dynamic>> getOrCreateConversation(int targetUserId) as
         final response = await _dio.get('profile/');
         return response.data;
     }
+
+    static Future<void> deleteAccount() async {
+        await _dio.delete('profile/delete/');
+    }
 }
