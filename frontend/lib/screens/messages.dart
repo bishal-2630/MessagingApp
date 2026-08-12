@@ -22,10 +22,8 @@ class MessageScreen extends ConsumerWidget {
                     Padding(
                         padding: const EdgeInsets.only(right: 16.0),
                         child: GestureDetector(
-                            onTap: () async {
-                                await ref.read(authProvider.notifier).logout();
-                                if (!context.mounted) return;
-                                Navigator.pushReplacementNamed(context, '/');
+                            onTap: () {
+                                Navigator.pushNamed(context, '/profile');
                             },
                             child: CircleAvatar(
                                 radius: 18,
