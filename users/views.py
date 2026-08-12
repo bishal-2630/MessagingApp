@@ -20,6 +20,78 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 
 
+def send_email_otp(email, otp_code, subject, title_text):
+    email_sent = False
+    email_errors = []
+
+    # 1. Try Resend API (HTTPS port 443 - Works on Hugging Face)
+    resend_api_key = os.getenv('RESEND_API_KEY')
+    if resend_api_key:
+        try:
+            resp = requests.post(
+                'https://api.resend.com/emails',
+                headers={
+                    'Authorization': f'Bearer {resend_api_key}',
+                    'Content-Type': 'application/json',
+                },
+                json={
+                    'from': 'ChatMe <onboarding@resend.dev>',
+                    'to': [email],
+                    'subject': subject,
+                    'html': f'<p>{title_text}: <strong style="font-size: 24px; color: #34B7F1;">{otp_code}</strong></p><p>This code expires in 10 minutes.</p>',
+                },
+                timeout=10,
+            )
+            print(f"[DEBUG] Resend status={resp.status_code} body={resp.text}")
+            if resp.status_code in [200, 201]:
+                email_sent = True
+            else:
+                email_errors.append(f"Resend HTTP {resp.status_code}: {resp.text}")
+        except Exception as r_err:
+            email_errors.append(f"Resend exception: {r_err}")
+
+    # 2. Try Gmail Webhook URL (HTTPS port 443)
+    if not email_sent:
+        gmail_webhook_url = os.getenv('GMAIL_WEBHOOK_URL')
+        if gmail_webhook_url:
+            try:
+                resp = requests.post(
+                    gmail_webhook_url,
+                    json={
+                        'to': email,
+                        'subject': subject,
+                        'html': f'<p>{title_text}: <strong style="font-size: 24px; color: #34B7F1;">{otp_code}</strong></p><p>This code expires in 10 minutes.</p>',
+                    },
+                    timeout=15,
+                )
+                print(f"[DEBUG] Webhook status={resp.status_code} body={resp.text}")
+                if resp.status_code == 200 and 'error' not in resp.text.lower():
+                    email_sent = True
+                else:
+                    email_errors.append(f"Gmail Webhook HTTP {resp.status_code}: {resp.text}")
+            except Exception as w_err:
+                email_errors.append(f"Gmail Webhook exception: {w_err}")
+
+    # 3. Try Django SMTP send_mail (Port 587 - local)
+    if not email_sent:
+        try:
+            from django.core.mail import send_mail
+            from django.conf import settings
+            send_mail(
+                subject=subject,
+                message=f'{title_text}: {otp_code}\n\nThis code expires in 10 minutes.\nDo not share this code with anyone.',
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+            email_sent = True
+        except Exception as smtp_err:
+            email_errors.append(f"SMTP error: {smtp_err}")
+
+    print(f"[OTP LOG] OTP for {email} is: {otp_code} (email_sent={email_sent})")
+    return email_sent, email_errors
+
+
 class RegisterView(APIView):
     permission_classes = []
     def post(self, request):
@@ -32,20 +104,12 @@ class RegisterView(APIView):
             otp_code = str(random.randint(100000, 999999))
             EmailVerificationOTP.objects.create(user=user, otp=otp_code)
 
-            gmail_webhook_url = os.getenv('GMAIL_WEBHOOK_URL')
-            if gmail_webhook_url:
-                try:
-                    requests.post(
-                        gmail_webhook_url,
-                        json={
-                            'to': user.email,
-                            'subject': 'Verify your ChatMe account',
-                            'html': f'<p>Your verification code is: <strong style="font-size: 24px; color: #34B7F1;">{otp_code}</strong></p><p>This code expires in 10 minutes.</p>',
-                        },
-                        timeout=15,
-                    )
-                except Exception as e:
-                    print(f"[ERROR] Verification email failed: {e}")
+            send_email_otp(
+                email=user.email,
+                otp_code=otp_code,
+                subject='Verify your ChatMe account',
+                title_text='Your verification code is'
+            )
             return Response(
                 {'message': 'Account created. Please verify your email.', 'email': user.email},
                 status=status.HTTP_201_CREATED
@@ -347,20 +411,12 @@ class ResendVerificationView(APIView):
         EmailVerificationOTP.objects.filter(user=user, is_used=False).delete()
         otp_code = str(random.randint(100000, 999999))
         EmailVerificationOTP.objects.create(user=user, otp=otp_code)
-        gmail_webhook_url = os.getenv('GMAIL_WEBHOOK_URL')
-        if gmail_webhook_url:
-            try:
-                requests.post(
-                    gmail_webhook_url,
-                    json={
-                        'to': user.email,
-                        'subject': 'Verify your ChatMe account',
-                        'html': f'<p>Your verification code is: <strong style="font-size: 24px; color: #34B7F1;">{otp_code}</strong></p><p>This code expires in 10 minutes.</p>',
-                    },
-                    timeout=15,
-                )
-            except Exception as e:
-                print(f"[ERROR] Resend verification email failed: {e}")
+        send_email_otp(
+            email=user.email,
+            otp_code=otp_code,
+            subject='Verify your ChatMe account',
+            title_text='Your verification code is'
+        )
         return Response({'message': 'A new verification code has been sent to your email.'})
 
 class GoogleLoginView(APIView):
