@@ -54,6 +54,8 @@ frontend/windows/
 
 # Assets
 *.xcassets
+*.png
+frontend/**/*.png
 
 # IDE / Editor
 .idea/
