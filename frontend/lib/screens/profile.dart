@@ -194,10 +194,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 'Delete Account',
                 style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
               ),
-              subtitle: const Text(
-                'Permanently delete your account and all data',
-                style: TextStyle(fontSize: 12, color: Colors.red),
-              ),
               onTap: () async {
                 final confirm = await showDialog<bool>(
                   context: context,
