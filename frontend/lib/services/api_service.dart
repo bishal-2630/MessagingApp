@@ -185,6 +185,9 @@ static Future<Map<String, dynamic>> getOrCreateConversation(int targetUserId) as
         });
         return response.data;
     }
-    
 
+    static Future<Map<String, dynamic>> getProfile() async {
+        final response = await _dio.get('profile/');
+        return response.data;
+    }
 }
